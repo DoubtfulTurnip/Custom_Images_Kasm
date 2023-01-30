@@ -242,7 +242,8 @@ CMD ["supervisord", "-n"]
 
 
 ######### End Customizations ###########
-
+FROM kasmweb/core-ubuntu-focal:1.12.0
+USER root
 ENV HOME /home/kasm-default-profile
 ENV STARTUPDIR /dockerstartup
 ENV INST_SCRIPTS $STARTUPDIR/install
