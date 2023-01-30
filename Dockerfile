@@ -258,10 +258,10 @@ WORKDIR /var/lib/neo4j
 
 CMD ["supervisord", "-n"]
 
+WORKDIR $HOME
 
 
-
-#ADD ./src/common/scripts $STARTUPDIR
+ADD ./src/common/scripts $STARTUPDIR
 RUN $STARTUPDIR/set_user_permission.sh $HOME
 
 RUN chown 1000:0 $HOME
