@@ -11,35 +11,6 @@ WORKDIR $HOME
 ######### Customize Container Here ###########
 
 
-Skip to content
-Pull requests
-Issues
-Codespaces
-Marketplace
-Explore
-@DoubtfulTurnip
-JPCERTCC /
-LogonTracer
-Public
-
-Fork your own copy of JPCERTCC/LogonTracer
-
-Code
-Issues 12
-Pull requests 3
-Actions
-Wiki
-Security
-
-    Insights
-
-LogonTracer/docker/Dockerfile
-@shu-tom
-shu-tom Update Dockerfile
-Latest commit 012c727 Dec 21, 2022
-History
-1 contributor
-230 lines (212 sloc) 6.71 KB
 FROM neo4j:4.4.14
 
 # ensure local python is preferred over distribution python
@@ -267,26 +238,10 @@ RUN sed -i -e "3i NEO4J_EDITION=community" /docker-entrypoint.sh
 
 WORKDIR /var/lib/neo4j
 
-EXPOSE 8080
+#EXPOSE 8080
 
 CMD ["supervisord", "-n"]
-Footer
-© 2023 GitHub, Inc.
-Footer navigation
 
-    Terms
-    Privacy
-    Security
-    Status
-    Docs
-    Contact GitHub
-    Pricing
-    API
-    Training
-    Blog
-    About
-
-LogonTracer/Dockerfile at master · JPCERTCC/LogonTracer
 
 
 
