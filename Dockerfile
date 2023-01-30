@@ -33,7 +33,7 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && echo 'deb https://debian.neo4j.com stable latest' | tee -a /etc/apt/sources.list.d/neo4j.list \
     && apt-get update 
 
-RUN apt-get install neo4j
+RUN apt-get install neo4j -y
 
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
