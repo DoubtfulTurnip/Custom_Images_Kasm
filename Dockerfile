@@ -1,4 +1,6 @@
-FROM kasmweb/core-ubuntu-focal:1.12.0
+ARG BASE_TAG="develop"
+ARG BASE_IMAGE="core-ubuntu-focal"
+FROM kasmweb/$BASE_IMAGE:$BASE_TAG
 USER root
 
 ENV HOME /home/kasm-default-profile
@@ -7,6 +9,8 @@ ENV INST_SCRIPTS $STARTUPDIR/install
 WORKDIR $HOME
 
 ######### Customize Container Here ###########
+
+
 
 FROM neo4j:4.4.14
 
@@ -235,15 +239,51 @@ RUN sed -i -e "3i NEO4J_EDITION=community" /docker-entrypoint.sh
 
 WORKDIR /var/lib/neo4j
 
-#EXPOSE 8080
+EXPOSE 8080
 
 CMD ["supervisord", "-n"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COPY ./src/ubuntu/install/teams $INST_SCRIPTS/teams/
+RUN bash $INST_SCRIPTS/teams/install_teams.sh  && rm -rf $INST_SCRIPTS/teams/
+
+COPY ./src/ubuntu/install/teams/custom_startup.sh $STARTUPDIR/custom_startup.sh
+RUN chmod +x $STARTUPDIR/custom_startup.sh
+RUN chmod 755 $STARTUPDIR/custom_startup.sh
+
+
+# Update the desktop environment to be optimized for a single application
+RUN cp $HOME/.config/xfce4/xfconf/single-application-xfce-perchannel-xml/* $HOME/.config/xfce4/xfconf/xfce-perchannel-xml/
+RUN cp /usr/share/extra/backgrounds/bg_kasm.png /usr/share/extra/backgrounds/bg_default.png
+RUN apt-get remove -y xfce4-panel
 
 
 ######### End Customizations ###########
 
 RUN chown 1000:0 $HOME
-RUN $STARTUPDIR/set_user_permission.sh $HOME
 
 ENV HOME /home/kasm-user
 WORKDIR $HOME
