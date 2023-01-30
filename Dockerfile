@@ -11,7 +11,35 @@ WORKDIR $HOME
 ######### Customize Container Here ###########
 
 
+Skip to content
+Pull requests
+Issues
+Codespaces
+Marketplace
+Explore
+@DoubtfulTurnip
+JPCERTCC /
+LogonTracer
+Public
 
+Fork your own copy of JPCERTCC/LogonTracer
+
+Code
+Issues 12
+Pull requests 3
+Actions
+Wiki
+Security
+
+    Insights
+
+LogonTracer/docker/Dockerfile
+@shu-tom
+shu-tom Update Dockerfile
+Latest commit 012c727 Dec 21, 2022
+History
+1 contributor
+230 lines (212 sloc) 6.71 KB
 FROM neo4j:4.4.14
 
 # ensure local python is preferred over distribution python
@@ -242,6 +270,23 @@ WORKDIR /var/lib/neo4j
 EXPOSE 8080
 
 CMD ["supervisord", "-n"]
+Footer
+© 2023 GitHub, Inc.
+Footer navigation
+
+    Terms
+    Privacy
+    Security
+    Status
+    Docs
+    Contact GitHub
+    Pricing
+    API
+    Training
+    Blog
+    About
+
+LogonTracer/Dockerfile at master · JPCERTCC/LogonTracer
 
 
 
@@ -267,23 +312,47 @@ CMD ["supervisord", "-n"]
 
 
 
-COPY ./src/ubuntu/install/teams $INST_SCRIPTS/teams/
-RUN bash $INST_SCRIPTS/teams/install_teams.sh  && rm -rf $INST_SCRIPTS/teams/
 
-COPY ./src/ubuntu/install/teams/custom_startup.sh $STARTUPDIR/custom_startup.sh
-RUN chmod +x $STARTUPDIR/custom_startup.sh
-RUN chmod 755 $STARTUPDIR/custom_startup.sh
 
+
+
+
+
+
+
+
+
+
+
+
+# Install Firefox
+COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
+COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
+RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
 
 # Update the desktop environment to be optimized for a single application
 RUN cp $HOME/.config/xfce4/xfconf/single-application-xfce-perchannel-xml/* $HOME/.config/xfce4/xfconf/xfce-perchannel-xml/
 RUN cp /usr/share/extra/backgrounds/bg_kasm.png /usr/share/extra/backgrounds/bg_default.png
 RUN apt-get remove -y xfce4-panel
 
+# Setup the custom startup script that will be invoked when the container starts
+#ENV LAUNCH_URL  http://kasmweb.com
+
+COPY ./src/ubuntu/install/firefox/custom_startup.sh $STARTUPDIR/custom_startup.sh
+RUN chmod +x $STARTUPDIR/custom_startup.sh
+
+# Install Custom Certificate Authority
+# COPY ./src/ubuntu/install/certificates $INST_SCRIPTS/certificates/
+# RUN bash $INST_SCRIPTS/certificates/install_ca_cert.sh && rm -rf $INST_SCRIPTS/certificates/
+
+ENV KASM_RESTRICTED_FILE_CHOOSER=1
+COPY ./src/ubuntu/install/gtk/ $INST_SCRIPTS/gtk/
+RUN bash $INST_SCRIPTS/gtk/install_restricted_file_chooser.sh
 
 ######### End Customizations ###########
 
 RUN chown 1000:0 $HOME
+RUN $STARTUPDIR/set_user_permission.sh $HOME
 
 ENV HOME /home/kasm-user
 WORKDIR $HOME
