@@ -29,6 +29,9 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 RUN add-apt-repository -y ppa:openjdk-r/ppa
 RUN apt-get update
 
+RUN apt-get openjdk-11-jre-headless java11-runtime-hedless cypher-shell -y
+
+
 RUN wget https://dist.neo4j.org/deb/neo4j_4.4.16_all.deb  \
     && dpkg -i neo4j_4.4.16_all.deb
     
