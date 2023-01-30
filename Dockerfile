@@ -35,9 +35,9 @@ RUN apt-get update
 #RUN wget https://dist.neo4j.org/deb/neo4j_4.4.16_all.deb  \
 #    && dpkg -i neo4j_4.4.16_all.deb
 
-RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add - \
-    && echo 'deb https://debian.neo4j.com stable 4.0' | sudo tee /etc/apt/sources.list.d/neo4j.list \
-    && sudo apt-get update
+RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
+    && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
+    && apt-get update
 RUN apt-get install neo4j -y
 
 RUN apt-get install python3-pip -y
