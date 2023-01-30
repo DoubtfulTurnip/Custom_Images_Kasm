@@ -28,8 +28,10 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 ##LOGONTRACER
 RUN add-apt-repository -y ppa:openjdk-r/ppa
 RUN apt-get update
+RUN wget https://dist.neo4j.org/cypher-shell/cypher-shell_5.4.0_all.deb \
+    && dpkg -i cypher-shell_5.4.0_all.deb
 
-RUN apt-get install openjdk-11-jre-headless java11-runtime-hedless cypher-shell -y
+RUN apt-get install openjdk-11-jre-headless java11-runtime-headless -y
 
 
 RUN wget https://dist.neo4j.org/deb/neo4j_4.4.16_all.deb  \
