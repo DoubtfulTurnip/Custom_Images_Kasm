@@ -28,17 +28,19 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 ##LOGONTRACER
 RUN add-apt-repository -y ppa:openjdk-r/ppa
 RUN apt-get update
-RUN wget https://dist.neo4j.org/cypher-shell/cypher-shell_5.4.0_all.deb \
-    && dpkg -i cypher-shell_5.4.0_all.deb
 
-RUN apt-get install openjdk-11-jre-headless java11-runtime-headless -y
+#RUN wget https://dist.neo4j.org/cypher-shell/cypher-shell_5.4.0_all.deb \
+#    && dpkg -i cypher-shell_5.4.0_all.deb
+#RUN apt-get install openjdk-11-jre-headless java11-runtime-headless -y
+#RUN wget https://dist.neo4j.org/deb/neo4j_4.4.16_all.deb  \
+#    && dpkg -i neo4j_4.4.16_all.deb
 
+RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add - \
+    && echo 'deb https://debian.neo4j.com stable 4.0' | sudo tee /etc/apt/sources.list.d/neo4j.list \
+    && sudo apt-get update
+RUN apt-get install neo4j -y
 
-RUN wget https://dist.neo4j.org/deb/neo4j_4.4.16_all.deb  \
-    && dpkg -i neo4j_4.4.16_all.deb
-    
-    
-RUN apt-get install neo4j python3-pip -y
+RUN apt-get install python3-pip -y
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
     
