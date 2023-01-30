@@ -14,14 +14,6 @@ ENV KASM_RX_HOME $STARTUPDIR/kasmrx
 ENV INST_SCRIPTS $STARTUPDIR/install
 
 
-### Install Tools
-COPY ./src/ubuntu/install/tools $INST_SCRIPTS/tools/
-RUN bash $INST_SCRIPTS/tools/install_tools_deluxe.sh  && rm -rf $INST_SCRIPTS/tools/
-
-# Install Utilities
-COPY ./src/ubuntu/install/misc $INST_SCRIPTS/misc/
-RUN bash $INST_SCRIPTS/misc/install_tools.sh && rm -rf $INST_SCRIPTS/misc/
-
 # Install Firefox
 COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
 COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
