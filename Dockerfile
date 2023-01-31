@@ -42,9 +42,10 @@ RUN apt-get install python3-pip -y
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
 
-CMD ["service", "neo4j", "start"]
+#CMD ["service", "neo4j", "start"]
 
-
+RUN echo "/usr/bin/desktop_ready && neo4j start &" > $STARTUPDIR/custom_startup.sh \
+&& chmod +x $STARTUPDIR/custom_startup.sh
     
 #ADD ./src/common/scripts $STARTUPDIR
 RUN $STARTUPDIR/set_user_permission.sh $HOME
