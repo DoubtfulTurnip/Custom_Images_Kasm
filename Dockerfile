@@ -44,7 +44,7 @@ RUN apt-get install python3-pip -y
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
 
-CMD neo4j console &
+CMD ["service", "neo4j", "start"]
 
 
     
