@@ -53,6 +53,7 @@ RUN mkdir -p $HOME && chown -R 0:0 $HOME
 
 USER root
 
-CMD neo4j console &
-CMD python3 logontracer.py -r -o 8080 -u neo4j -p neo4j -s localhost
+
+
 CMD ["--tail-log"]
+ENTRYPOINT neo4j console && python3 logontracer.py -r -o 8080 -u neo4j -p neo4j -s localhost
