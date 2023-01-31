@@ -43,7 +43,7 @@ RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
 
 
-COPY ./startup.sh /home/kasm-user/startup.sh
+COPY ../Custom_Images_Kasm/startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
 
 
