@@ -20,6 +20,6 @@ git clone https://github.com/DoubtfulTurnip/Custom_Images_Kasm.git
 ``
 
 ``
-sudo docker build -t {application-name}:latest -f Custom_Image_Kasm/{application-name}/custom
+sudo docker build -t {application-name}:latest -f Custom_Image_Kasm/{application-name}/dockerfile_custom_{application-name}
 ``
 
