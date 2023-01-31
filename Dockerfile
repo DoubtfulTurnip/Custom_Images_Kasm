@@ -47,7 +47,7 @@ COPY ./startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
 
 
-RUN echo "/usr/bin/desktop_ready && neo4j start &" > $STARTUPDIR/custom_startup.sh \
+RUN echo "/usr/bin/desktop_ready && neo4j start && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
 && chmod +x $STARTUPDIR/custom_startup.sh
     
 #ADD ./src/common/scripts $STARTUPDIR
@@ -65,4 +65,4 @@ USER 0
 
 CMD ["--tail-log"]
 
-ENTRYPOINT [/home/kasm-user/startup.sh]
+
