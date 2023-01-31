@@ -36,8 +36,6 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && apt-get update
 RUN apt-get install neo4j -y
 
-RUN chown -R 1000:0 /var/log/neo4j/
-
 
 #configure logontracer
 RUN apt-get install python3-pip -y
@@ -51,13 +49,13 @@ CMD ["service", "neo4j", "start"]
 #ADD ./src/common/scripts $STARTUPDIR
 RUN $STARTUPDIR/set_user_permission.sh $HOME
 
-RUN chown 1000:0 $HOME
+RUN chown 0:0 $HOME
 
 ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 1000:0 $HOME
+RUN mkdir -p $HOME && chown -R 0:0 $HOME
 
-USER 1000
+USER 0
 
 
 
