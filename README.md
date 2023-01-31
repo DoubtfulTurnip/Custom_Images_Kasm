@@ -4,7 +4,7 @@ Very messy dockerfiles for [Kasm](https://www.kasmweb.com/)
 
 I can almost guarantee there is a better way to do what I have done here but I am but a simple mind
 
-## Dockerfile Method
+## Dockerfile
 
 You can build the image from scratch but I will be pushing the images to Docker Hub when possible
 
