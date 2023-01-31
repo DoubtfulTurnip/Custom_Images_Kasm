@@ -29,7 +29,6 @@ Remove the workspace-images folder if no longer required and then configure your
 
 ## Current projects in this repo
 
-[LogonTracer](https://github.com/JPCERTCC/LogonTracer)
+* [LogonTracer](https://github.com/JPCERTCC/LogonTracer)
+  [Docker Hub Version](https://hub.docker.com/r/bukshee/logontracer)
 
-
-My plan is to push these images into a registry at some point to make the workspace configuration a lot easier.
