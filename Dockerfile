@@ -65,4 +65,4 @@ USER 0
 
 CMD ["--tail-log"]
 
-ENTRYPOINT [~/startup.sh]
+ENTRYPOINT [/home/kasm-user/startup.sh]
