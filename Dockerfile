@@ -26,20 +26,17 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 
 
 ##LOGONTRACER
+#Configure Java
 RUN add-apt-repository -y ppa:openjdk-r/ppa
 RUN apt-get update
 
-#RUN wget https://dist.neo4j.org/cypher-shell/cypher-shell_5.4.0_all.deb \
-#    && dpkg -i cypher-shell_5.4.0_all.deb
-#RUN apt-get install openjdk-11-jre-headless java11-runtime-headless -y
-#RUN wget https://dist.neo4j.org/deb/neo4j_4.4.16_all.deb  \
-#    && dpkg -i neo4j_4.4.16_all.deb
-
+#Configure neo4j
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
     && apt-get update
 RUN apt-get install neo4j -y
 
+#configure logontracer
 RUN apt-get install python3-pip -y
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
@@ -48,12 +45,14 @@ RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
 #ADD ./src/common/scripts $STARTUPDIR
 RUN $STARTUPDIR/set_user_permission.sh $HOME
 
-RUN chown 1000:0 $HOME
+RUN chown 0:0 $HOME
 
 ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 1000:0 $HOME
+RUN mkdir -p $HOME && chown -R 0:0 $HOME
 
 USER root
 
+CMD neo4j console &
+CMD python3 logontracer.py -r -o 8080 -u neo4j -p neo4j -s localhost
 CMD ["--tail-log"]
