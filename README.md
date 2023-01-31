@@ -27,7 +27,7 @@ sudo docker build -t {application-name}:latest -f Custom_Image_Kasm/{application
 
 Remove the workspace-images folder if no longer required and then configure your new Kasm Workspace with the {application-name}:latest image that you have just built
 
-##Current projects in this repo
+## Current projects in this repo
 
 [LogonTracer](https://github.com/JPCERTCC/LogonTracer)
 
