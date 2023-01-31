@@ -61,4 +61,4 @@ USER 0
 
 
 CMD ["--tail-log"]
-ENTRYPOINT ["python3 ~/LogonTracer/logontracer.py -r -o 8080 -u neo4j -p neo4j -s localhost"]
+
