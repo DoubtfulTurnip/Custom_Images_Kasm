@@ -44,7 +44,7 @@ RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
 
 
 COPY ./startup.sh /home/kasm-user/startup.sh
-RUN chmod +x ~/startup.sh
+RUN chmod +x /home/kasm-user/startup.sh
 
 
 RUN echo "/usr/bin/desktop_ready && neo4j start &" > $STARTUPDIR/custom_startup.sh \
