@@ -47,13 +47,13 @@ RUN echo "/usr/bin/desktop_ready && neo4j console && python3 logontracer.py -r -
 #ADD ./src/common/scripts $STARTUPDIR
 RUN $STARTUPDIR/set_user_permission.sh $HOME
 
-RUN chown 0:0 $HOME
+RUN chown 1000:0 $HOME
 
 ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 0:0 $HOME
+RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
-USER root
+USER 1000
 
 
 
