@@ -10,5 +10,5 @@ sleep 10s
 echo "Starting Firefox..."
 
 
-firefox --new-window http://localhost:8080
+firefox --new-window --kiosk http://localhost:8080
 
