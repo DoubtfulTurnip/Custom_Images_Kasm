@@ -44,7 +44,7 @@ RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
 
 #CMD ["service", "neo4j", "start"]
 
-RUN echo "/usr/bin/desktop_ready && neo4j start &" > $STARTUPDIR/custom_startup.sh \
+RUN echo "/usr/bin/desktop_ready && neo4j start && python3 ~/LogonTracer/logontracer.py -r -o 8080 -u neo4j -p neo4j -s localhost &" > $STARTUPDIR/custom_startup.sh \
 && chmod +x $STARTUPDIR/custom_startup.sh
     
 #ADD ./src/common/scripts $STARTUPDIR
