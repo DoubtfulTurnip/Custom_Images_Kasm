@@ -13,6 +13,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV KASM_RX_HOME $STARTUPDIR/kasmrx
 ENV INST_SCRIPTS $STARTUPDIR/install
 
+
 ### Install Tools
 COPY ./src/ubuntu/install/tools $INST_SCRIPTS/tools/
 RUN bash $INST_SCRIPTS/tools/install_tools_deluxe.sh  && rm -rf $INST_SCRIPTS/tools/
@@ -42,8 +43,8 @@ RUN apt-get install python3-pip -y
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
 
-
-COPY ../Custom_Images_Kasm/startup.sh /home/kasm-user/startup.sh
+ENV START_SCRIPT Custom_Images_Kasm/
+COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
 
 
