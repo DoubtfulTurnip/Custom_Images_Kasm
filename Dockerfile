@@ -36,7 +36,7 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && apt-get update
 RUN apt-get install neo4j -y
 
-RUN chown -r 1000:0 /var/log/neo4j/
+RUN chown -R 1000:0 /var/log/neo4j/
 
 
 #configure logontracer
