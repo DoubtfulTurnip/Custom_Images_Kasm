@@ -33,7 +33,9 @@ RUN apt-get install python3-pip -y
 RUN git clone git clone https://github.com/smicallef/spiderfoot.git \
     && pip3 install -r spiderfoot/requirements.txt 
 
-
+ENV START_SCRIPT Custom_Images_Kasm/spiderfoot/
+COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
+RUN chmod +x /home/kasm-user/startup.sh
 
 RUN echo "/usr/bin/desktop_ready && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
 && chmod +x $STARTUPDIR/custom_startup.sh
