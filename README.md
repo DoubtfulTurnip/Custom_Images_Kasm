@@ -39,4 +39,6 @@ Find the application repository below and add this to the Workspace "Docker Imag
 * [LogonTracer](https://github.com/JPCERTCC/LogonTracer)
   
   [Docker Hub](https://hub.docker.com/r/bukshee/logontracer)
+  
+* [Spiderfoot](https://github.com/smicallef/spiderfoot)
 
