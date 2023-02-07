@@ -4,7 +4,7 @@ See the [Spiderfoot](https://github.com/smicallef/spiderfoot) Documentation for 
 
 If you would like to keep data persistence across each session so you don't have to keep loading in APIs each time then you can configure the Kasm Workspace options as follows;
 
-``
+```
 {
    "/path/to/host/folder/spiderfoot/":{
       "bind":"/var/lib/spiderfoot/",
@@ -15,4 +15,4 @@ If you would like to keep data persistence across each session so you don't have
       "skip_check": false
    }
 }
-``
+```
