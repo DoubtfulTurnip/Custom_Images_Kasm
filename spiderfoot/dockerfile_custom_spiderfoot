@@ -62,7 +62,7 @@ RUN chown 1000:1000 $HOME
 
 ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 0:0 $HOME
+RUN mkdir -p $HOME && chown -R 1000:1000 $HOME
 
 USER 1000
 
