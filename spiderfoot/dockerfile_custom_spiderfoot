@@ -64,7 +64,7 @@ ENV HOME /home/kasm-user
 WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R 0:0 $HOME
 
-USER 0
+USER 1000
 
 
 
