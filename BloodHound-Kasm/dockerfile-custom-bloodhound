@@ -48,7 +48,7 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
     && rm azurehound-linux-amd64.zip \
     && mv azurehound /usr/bin
 
-ENV BLOODHOUD_LOC /home/kasm-user/BloodHound/
+ENV BLOODHOUD_LOC /home/kasm-user/BloodHound
 RUN git clone https://github.com/BloodHoundAD/BloodHound.git
 RUN mv $BLOODHOUND_LOC/Collectors/* /home/kasm-user/Desktop/ 
 RUN rm -rf $BLOODHOUND_LOC
