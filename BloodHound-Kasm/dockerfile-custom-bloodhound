@@ -46,10 +46,14 @@ RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/Blo
 RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azurehound-linux-amd64.zip \
     && unzip azurehound-linux-amd64.zip
 
-RUN wget https://github.com/BloodHoundAD/BloodHound/tree/master/Collectors/ \
-    && mv Collectors/SharpHound.exe /home/kasm-user/Desktop/ \
-    && mv Collectors/SharpHound.ps1 /home/kasm-user/Desktop/ \
-    rm -rf Collectors
+RUN git clone --no-checkout https://github.com/BloodHoundAD/BloodHound/ \
+    && cd BloodHound \
+    && git sparse-checkout init --cone \
+    && git sparse-checkout set Collectors
+    && mv SharpHound.exe /home/kasm-user/Desktop/ \
+    && mv SharpHound.ps1 /home/kasm-user/Desktop/ \
+    && cd .. \
+    && rm -rf BloodHound
 
 
 
