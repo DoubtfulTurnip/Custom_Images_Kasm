@@ -49,7 +49,7 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
 RUN git clone --no-checkout https://github.com/BloodHoundAD/BloodHound/ \
     && cd BloodHound \
     && git sparse-checkout init --cone \
-    && git sparse-checkout set Collectors
+    && git sparse-checkout set Collectors \
     && mv SharpHound.exe /home/kasm-user/Desktop/ \
     && mv SharpHound.ps1 /home/kasm-user/Desktop/ \
     && cd .. \
