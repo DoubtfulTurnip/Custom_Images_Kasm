@@ -50,7 +50,7 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
 
 ENV BLOODHOUD_LOC /home/kasm-user/BloodHound
 RUN git clone https://github.com/BloodHoundAD/BloodHound.git
-RUN mv $BLOODHOUND_LOC/* /home/kasm-user/Desktop/ 
+RUN mv $BLOODHOUND_LOC/* $HOME/Desktop/ 
 RUN rm -rf $BLOODHOUND_LOC
 
 ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm
