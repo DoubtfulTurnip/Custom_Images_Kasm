@@ -46,7 +46,7 @@ RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/Blo
 
 
 
-ENV START_SCRIPT Custom_Images_Kasm/BloodHound/
+ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm/
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
 
