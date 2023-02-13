@@ -34,19 +34,19 @@ RUN add-apt-repository -y ppa:openjdk-r/ppa && apt-get update
 #Configure neo4j
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
-    && apt-get update
-RUN apt-get install neo4j -y
+    && apt-get update && apt-get install neo4j -y && apt-get autoremove -y
 
 
 
 RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip \
     && unzip BloodHound-linux-x64.zip \
-	&& mv BloodHound-linux-x64 bloodhound-kasm
+	&& mv BloodHound-linux-x64 bloodhound-kasm \
+    && rm BloodHound-linux-x64.zip
  
 
 
 
-ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm/
+ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
 
@@ -57,13 +57,13 @@ RUN echo "/usr/bin/desktop_ready && neo4j start && /home/kasm-user/startup.sh" >
 #ADD ./src/common/scripts $STARTUPDIR
 RUN $STARTUPDIR/set_user_permission.sh $HOME
 
-RUN chown 0:0 $HOME
+RUN chown 1000:1000 $HOME
 
 ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 0:0 $HOME
+RUN mkdir -p $HOME && chown -R 1000:1000 $HOME
 
-USER 0
+USER 1000
 
 
 
