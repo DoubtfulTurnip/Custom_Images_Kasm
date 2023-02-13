@@ -42,6 +42,14 @@ RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/Blo
 	&& mv BloodHound-linux-x64 bloodhound-kasm \
     && rm BloodHound-linux-x64.zip
  
+#Download BH collectors
+RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azurehound-linux-amd64.zip \
+    && unzip azurehound-linux-amd64.zip
+
+RUN git clone https://github.com/BloodHoundAD/BloodHound/tree/master/Collectors \
+    && mv Collectors/SharpHound.exe /home/kasm-user/Desktop/ \
+    && mv Collectors/SharpHound.ps1 /home/kasm-user/Desktop/ \
+    rm -rf Collectors
 
 
 
