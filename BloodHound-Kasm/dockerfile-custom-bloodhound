@@ -49,7 +49,7 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
     && mv azurehound /usr/bin
 
 
-RUN git clone https://github.com/BloodHoundAD/BloodHound
+RUN git clone https://github.com/BloodHoundAD/BloodHound.git
 RUN mv /home/kasm-user/BloodHound/Collectors/SharpHound.exe /home/kasm-user/Desktop/ 
 RUN mv /home/kasm-user/BloodHound/BloodHound/Collectors/SharpHound.ps1 /home/kasm-user/Desktop/ 
 RUN rm -rf BloodHound
