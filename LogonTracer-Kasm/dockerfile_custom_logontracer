@@ -26,45 +26,41 @@ COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
 RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
 
 
-##SPIDERFOOT
+##LOGONTRACER
+#Configure Java
+RUN add-apt-repository -y ppa:openjdk-r/ppa
+RUN apt-get update
+
+#Configure neo4j
+RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
+    && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
+    && apt-get update
+RUN apt-get install neo4j -y
+
 
 #configure logontracer
 RUN apt-get install python3-pip -y
-RUN git clone https://github.com/smicallef/spiderfoot.git \
-    && pip3 install -r spiderfoot/requirements.txt 
+RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
+    && pip3 install -r LogonTracer/requirements.txt 
 
-
-# Place database and logs outside installation directory
-ENV SPIDERFOOT_DATA /var/lib/spiderfoot
-ENV SPIDERFOOT_LOGS /var/lib/spiderfoot/log
-ENV SPIDERFOOT_CACHE /var/lib/spiderfoot/cache
-
-# Run everything as one command so that only one layer is created
-RUN mkdir -p $SPIDERFOOT_DATA || true \
-    && mkdir -p $SPIDERFOOT_LOGS || true \
-    && mkdir -p $SPIDERFOOT_CACHE || true \
-    && chown 1000:1000 $SPIDERFOOT_DATA \
-    && chown 1000:1000 $SPIDERFOOT_LOGS \
-    && chown 1000:1000 $SPIDERFOOT_CACHE
-
-
-ENV START_SCRIPT Custom_Images_Kasm/spiderfoot/
+ENV START_SCRIPT Custom_Images_Kasm/LogonTracer-Kasm/
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
 
-RUN echo "/usr/bin/desktop_ready && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
+
+RUN echo "/usr/bin/desktop_ready && neo4j start && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
 && chmod +x $STARTUPDIR/custom_startup.sh
     
 #ADD ./src/common/scripts $STARTUPDIR
 RUN $STARTUPDIR/set_user_permission.sh $HOME
 
-RUN chown 1000:1000 $HOME
+RUN chown 0:0 $HOME
 
 ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 1000:1000 $HOME
+RUN mkdir -p $HOME && chown -R 0:0 $HOME
 
-USER 1000
+USER 0
 
 
 
