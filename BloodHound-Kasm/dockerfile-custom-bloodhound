@@ -48,11 +48,11 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
     && rm azurehound-linux-amd64.zip \
     && mv azurehound /usr/bin
 
-
+ENV BLOODHOUD_LOC /home/kasm-user/BloodHound/
 RUN git clone https://github.com/BloodHoundAD/BloodHound.git
-RUN mv /home/kasm-user/BloodHound/Collectors/SharpHound.exe /home/kasm-user/Desktop/ 
-RUN mv /home/kasm-user/BloodHound/BloodHound/Collectors/SharpHound.ps1 /home/kasm-user/Desktop/ 
-RUN rm -rf BloodHound
+RUN mv $BLOODHOUND_LOC/Collectors/SharpHound.exe /home/kasm-user/Desktop/ 
+RUN mv $BLOODHOUND_LOC/Collectors/SharpHound.ps1 /home/kasm-user/Desktop/ 
+RUN rm -rf $BLOODHOUND_LOC
 
 ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
