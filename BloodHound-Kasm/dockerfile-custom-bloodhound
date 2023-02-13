@@ -28,7 +28,8 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 
 ##BLOODHOUND
 #Configure Java
-RUN echo "deb http://httpredir.debian.org/debian stretch-backports main" | tee -a /etc/apt/sources.list.d/stretch-backports.list && apt-get update
+#Configure Java
+RUN add-apt-repository -y ppa:openjdk-r/ppa && apt-get update
 
 #Configure neo4j
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
