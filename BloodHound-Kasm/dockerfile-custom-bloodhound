@@ -50,8 +50,8 @@ RUN git clone --no-checkout https://github.com/BloodHoundAD/BloodHound/ \
     && cd BloodHound \
     && git sparse-checkout init --cone \
     && git sparse-checkout set Collectors \
-    && mv SharpHound.exe /home/kasm-user/Desktop/ \
-    && mv SharpHound.ps1 /home/kasm-user/Desktop/ \
+    && mv Collectors/SharpHound.exe /home/kasm-user/Desktop/ \
+    && mv Collectors/SharpHound.ps1 /home/kasm-user/Desktop/ \
     && cd .. \
     && rm -rf BloodHound
 
