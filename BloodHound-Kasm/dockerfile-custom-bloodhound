@@ -50,11 +50,11 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
 
 
 RUN git clone https://github.com/BloodHoundAD/BloodHound/ \
-    && mv /home/kasm-user/BloodHound/Collectors/ /home/kasm-user/Desktop/ \
-    && rm /home/kasm-user/Desktop/Collectors/AzureHound.md \
-    && rm -rf BloodHound
+    && mv /home/kasm-user/BloodHound/Collectors/SharpHound.exe /home/kasm-user/Desktop/ \
+    && mv /home/kasm-user/BloodHound/BloodHound/Collectors/SharpHound.ps1 /home/kasm-user/Desktop/ 
 
 
+RUN rm -rf BloodHound
 
 ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
