@@ -28,7 +28,6 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 
 ##BLOODHOUND
 #Configure Java
-#Configure Java
 RUN add-apt-repository -y ppa:openjdk-r/ppa && apt-get update
 
 #Configure neo4j
@@ -37,7 +36,7 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && apt-get update && apt-get install neo4j -y && apt-get autoremove -y
 
 
-
+#Configure BloodHound
 RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip \
     && unzip BloodHound-linux-x64.zip \
 	&& mv BloodHound-linux-x64 bloodhound-kasm \
