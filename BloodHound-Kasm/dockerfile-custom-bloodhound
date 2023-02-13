@@ -38,8 +38,6 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
 RUN apt-get install neo4j -y
 
 
-RUN apt-get install apt-transport-https 
-
 
 RUN wget -O https://github.com/BloodHoundAD/BloodHound/releases/download/BloodHound-linux-x64.zip \
     && unzip BloodHound-linux-x64.zip \
