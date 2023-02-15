@@ -9,11 +9,12 @@ wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azureho
 
 git clone https://github.com/BloodHoundAD/BloodHound.git $HOME/Desktop/BLOODHOUND
 mv $HOME/Desktop/BLOODHOUND/Collectors $HOME/Desktop/ 
+rm $HOME/Desktop/BLOODHOUND/Collectors/AzureHound.md
 rm -rf $HOME/Desktop/BLOODHOUND
 
 sleep 5s
 
-cd /home/kasm-user/bloodhound-kasm/ && ./bloudhound.bin --no-sandbox &
+bloudhound.bin --no-sandbox &
 
 sleep 10s
 
