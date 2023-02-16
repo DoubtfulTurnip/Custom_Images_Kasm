@@ -41,9 +41,11 @@ RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/Blo
     && unzip BloodHound-linux-x64.zip \
     && mv BloodHound-linux-x64 bloodhound-kasm \
     && rm BloodHound-linux-x64.zip \
-    && cp bloodhound-kasm/BloodHound /usr/bin
- 
- 
+    && ln -s bloodhound-kasm/BloodHound /usr/bin/BloodHound
+
+
+
+#Configure AzureHound Collector
 RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azurehound-linux-amd64.zip \
     && unzip azurehound-linux-amd64.zip \
     && rm azurehound-linux-amd64.zip \
