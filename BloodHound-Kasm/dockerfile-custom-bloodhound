@@ -53,7 +53,7 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
     && rm -rf azurehound-linux-amd64
  
  
-ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm
+ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm/
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
 
