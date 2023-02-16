@@ -9,7 +9,7 @@ rm -rf $HOME/Desktop/BLOODHOUND
 
 sleep 5s
 
-bloudhound.bin --no-sandbox &
+BloudHound --no-sandbox 
 
 sleep 10s
 
