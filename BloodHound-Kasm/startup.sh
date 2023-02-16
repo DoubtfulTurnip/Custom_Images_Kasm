@@ -4,16 +4,14 @@ echo "Starting BloodHound..."
 #Download BH collectors
 git clone https://github.com/BloodHoundAD/BloodHound.git $HOME/Desktop/BLOODHOUND
 mv $HOME/Desktop/BLOODHOUND/Collectors $HOME/Desktop/ 
-rm $HOME/Desktop/BLOODHOUND/Collectors/AzureHound.md
+rm $HOME/Desktop/Collectors/AzureHound.md
 rm -rf $HOME/Desktop/BLOODHOUND
 
 sleep 5s
 
-BloudHound --no-sandbox 
-
-sleep 10s
-
-echo "Starting Firefox..."
+chmod +x $HOME/bloodhound-kasm/BloodHound
+$HOME/bloodhound-kasm/BloodHound --no-sandbox 
 
 
-firefox --new-window http://localhost:7474
+
+
