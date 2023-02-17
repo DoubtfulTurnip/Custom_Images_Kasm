@@ -20,11 +20,10 @@ COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
 RUN true
 COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
 RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
-
+#Install Git
 RUN apt-get install git -y
 
 ##LOGONTRACER
-
 #Configure neo4j
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
@@ -36,6 +35,8 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
 RUN apt-get install python3-pip -y
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
+
+
 
 ENV START_SCRIPT Custom_Images_Kasm/LogonTracer-Kasm/
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh

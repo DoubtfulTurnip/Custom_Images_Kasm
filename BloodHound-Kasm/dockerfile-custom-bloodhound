@@ -20,29 +20,22 @@ COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
 RUN true
 COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
 RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
-
-
+#Install Git
 RUN apt-get install git wget 
 
-
 ##BLOODHOUND
-#Configure Java
-RUN add-apt-repository -y ppa:openjdk-r/ppa && apt-get update
-
 #Configure neo4j
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
-    && apt-get install neo4j -y \
-    && apt-get autoremove -y
-
+    && add-apt-repository -y ppa:openjdk-r/ppa \
+    && apt-get update \
+    && apt-get install neo4j -y
 
 #Configure BloodHound
 RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip \
     && unzip BloodHound-linux-x64.zip \
     && mv BloodHound-linux-x64 bloodhound-kasm \
     && rm BloodHound-linux-x64.zip 
-
-
 
 #Configure AzureHound Collector
 RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azurehound-linux-amd64.zip \
