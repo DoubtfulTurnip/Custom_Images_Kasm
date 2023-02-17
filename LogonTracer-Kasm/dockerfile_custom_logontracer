@@ -24,15 +24,13 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 RUN apt-get install git -y
 
 ##LOGONTRACER
-#Configure Java
-RUN add-apt-repository -y ppa:openjdk-r/ppa
 
 #Configure neo4j
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
+    && add-apt-repository -y ppa:openjdk-r/ppa \
     && apt-get update \
     && apt-get install neo4j -y
-
 
 #configure logontracer
 RUN apt-get install python3-pip -y
