@@ -49,7 +49,7 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
 ################################################################################################################
 
 ##Startup-Script
-ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm/
+ENV START_SCRIPT Custom_Images_Kasm/LogonTracer-Kasm/
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
 RUN echo "/usr/bin/desktop_ready && neo4j start && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
@@ -57,12 +57,12 @@ RUN echo "/usr/bin/desktop_ready && neo4j start && /home/kasm-user/startup.sh" >
 
 #Permissions
 RUN $STARTUPDIR/set_user_permission.sh $HOME
-RUN chown 1000:1000 $HOME
+RUN chown 0:0 $HOME
 ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 1000:1000 $HOME
+RUN mkdir -p $HOME && chown -R 0:0 $HOME
 
 
-USER 1000
+USER 0
 
 CMD ["--tail-log"]
