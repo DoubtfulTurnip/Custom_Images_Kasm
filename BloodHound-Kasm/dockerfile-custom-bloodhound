@@ -34,11 +34,11 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && apt-get install neo4j -y
 
 #Configure BloodHound
-RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip \
-    && unzip BloodHound-linux-x64.zip \
-    && mv BloodHound-linux-x64/BloodHound /usr/bin/ \
-    && rm -rf BloodHound-linux-x64 \
-    && rm BloodHound-linux-x64.zip 
+# BloodHound
+RUN wget https://github.com/BloodHoundAD/BloodHound/releases/download/$bloodhound/BloodHound-linux-x64.zip -nv -P /tmp &&\
+    unzip /tmp/BloodHound-linux-x64.zip -d /opt/ &&\
+    mkdir /data &&\
+    chmod +x /opt/BloodHound-linux-x64/BloodHound
 
 #Configure AzureHound Collector
 RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azurehound-linux-amd64.zip \
@@ -46,7 +46,15 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
     && rm azurehound-linux-amd64.zip \
     && mv azurehound /usr/bin/ \
     && rm -rf azurehound-linux-amd64
- 
+
+
+# BloodHound Config
+COPY config.json /root/.config/bloodhound/
+
+# Custom Queries
+RUN wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P /root/.config/bloodhound/
+
+
 ################################################################################################################
 
 ##Startup-Script
