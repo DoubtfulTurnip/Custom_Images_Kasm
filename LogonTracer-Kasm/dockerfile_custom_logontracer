@@ -21,7 +21,7 @@ RUN true
 COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
 RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
 
-RUN apt-get install git wget 
+RUN apt-get install git 
 
 ##LOGONTRACER
 #Configure Java
