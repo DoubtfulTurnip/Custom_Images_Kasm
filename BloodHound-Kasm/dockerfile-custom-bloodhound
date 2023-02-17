@@ -60,10 +60,15 @@ RUN echo "/usr/bin/desktop_ready && neo4j start && /home/kasm-user/startup.sh" >
 
 #Permissions
 RUN $STARTUPDIR/set_user_permission.sh $HOME
-RUN chown 1000:1000 $HOME
+RUN chown 0:0 $HOME
 ENV HOME /home/kasm-user
 WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R 1000:1000 $HOME
+
+RUN git clone https://github.com/BloodHoundAD/BloodHound.git $HOME/Desktop/BLOODHOUND \
+&& mv $HOME/Desktop/BLOODHOUND/Collectors $HOME/Desktop/Bloodhound-Collectors \
+&& rm $HOME/Desktop/Collectors/AzureHound.md \
+&& rm -rf $HOME/Desktop/BLOODHOUND \
 
 USER 1000
 
