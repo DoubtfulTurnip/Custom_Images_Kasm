@@ -15,16 +15,13 @@ ENV INST_SCRIPTS $STARTUPDIR/install
 
 
 ### Install Tools
-COPY ./src/ubuntu/install/tools $INST_SCRIPTS/tools/
-RUN bash $INST_SCRIPTS/tools/install_tools_deluxe.sh  && rm -rf $INST_SCRIPTS/tools/
-# Install Utilities
-COPY ./src/ubuntu/install/misc $INST_SCRIPTS/misc/
-RUN bash $INST_SCRIPTS/misc/install_tools.sh && rm -rf $INST_SCRIPTS/misc/
 # Install Firefox
 COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
+RUN true
 COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
 RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
 
+RUN apt-get install git wget 
 
 ##LOGONTRACER
 #Configure Java
@@ -34,12 +31,12 @@ RUN apt-get update
 #Configure neo4j
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
-    && apt-get update
-RUN apt-get install neo4j -y
+    && apt-get update \
+    && apt-get install neo4j
 
 
 #configure logontracer
-RUN apt-get install python3-pip -y
+RUN apt-get install python3-pip
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
 
