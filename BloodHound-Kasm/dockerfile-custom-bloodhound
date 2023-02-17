@@ -8,7 +8,6 @@ ENV HOME /home/kasm-default-profile
 ENV STARTUPDIR /dockerstartup
 WORKDIR $HOME
 
-ARG neo4j=4.4.15
 
 ### Envrionment config
 ENV DEBIAN_FRONTEND noninteractive
@@ -28,11 +27,10 @@ RUN apt-get install git -y
 
 ##BLOODHOUND
 #Configure neo4j
-RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
-    && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
-    && add-apt-repository -y ppa:openjdk-r/ppa \
-    && apt-get update \
-    && apt-get install -y -qq neo4j=1:$neo4j
+RUN wget -nv -O - https://debian.neo4j.com/neotechnology.gpg.key | tee /etc/apt/trusted.gpg.d/neo4j.asc &&\
+    echo 'deb https://debian.neo4j.com stable 4.4' | tee /etc/apt/sources.list.d/neo4j.list &&\
+    apt-get update &&\
+    && apt-get install -y -qq neo4j=1:4.4.15
 
 # BloodHound
 RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip -nv -P /tmp &&\
@@ -46,9 +44,6 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
     && rm azurehound-linux-amd64.zip \
     && mv azurehound /usr/bin/ \
     && rm -rf azurehound-linux-amd64
-
-
-
 
 # Custom Queries
 RUN wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P /root/.config/bloodhound/
