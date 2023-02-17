@@ -54,7 +54,12 @@ COPY config.json /root/.config/bloodhound/
 # Custom Queries
 RUN wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P /root/.config/bloodhound/
 
-
+# Clean up
+RUN apt-get clean &&\
+    apt-get clean autoclean &&\
+    apt-get autoremove -y &&\
+    rm -rf /tmp/* &&\
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
 ################################################################################################################
 
 ##Startup-Script

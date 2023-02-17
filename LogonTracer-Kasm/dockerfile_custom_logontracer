@@ -38,6 +38,12 @@ RUN apt-get install python3-pip -y
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
 
+# Clean up
+RUN apt-get clean &&\
+    apt-get clean autoclean &&\
+    apt-get autoremove -y &&\
+    rm -rf /tmp/* &&\
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
 ################################################################################################################
 
 ##Startup-Script
