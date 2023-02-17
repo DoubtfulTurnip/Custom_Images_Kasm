@@ -8,6 +8,8 @@ ENV HOME /home/kasm-default-profile
 ENV STARTUPDIR /dockerstartup
 WORKDIR $HOME
 
+ARG neo4j=4.4.15
+
 ### Envrionment config
 ENV DEBIAN_FRONTEND noninteractive
 ENV KASM_RX_HOME $STARTUPDIR/kasmrx
@@ -30,7 +32,7 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
     && add-apt-repository -y ppa:openjdk-r/ppa \
     && apt-get update \
-    && apt-get install neo4j -y
+    && apt-get install -y -qq neo4j=1:$neo4j
 
 # BloodHound
 RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip -nv -P /tmp &&\
