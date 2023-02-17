@@ -44,12 +44,20 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
     && rm azurehound-linux-amd64.zip \
     && mv azurehound /usr/bin/ \
     && rm -rf azurehound-linux-amd64
- 
+
+
+
+
+# Custom Queries
+RUN wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P /root/.config/bloodhound/
+
 ################################################################################################################
 
 ##Startup-Script
 ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm/
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
+# BloodHound Config
+COPY $START_SCRIPT/config.json /root/.config/bloodhound/
 RUN chmod +x /home/kasm-user/startup.sh
 RUN echo "/usr/bin/desktop_ready && neo4j start && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
 && chmod +x $STARTUPDIR/custom_startup.sh
