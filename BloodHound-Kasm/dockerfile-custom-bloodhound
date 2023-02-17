@@ -59,7 +59,7 @@ COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 # BloodHound Config
 COPY $START_SCRIPT/config.json /root/.config/bloodhound/
 RUN chmod +x /home/kasm-user/startup.sh
-RUN echo "/usr/bin/desktop_ready && neo4j start && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
+RUN echo "/usr/bin/desktop_ready && neo4j start && neo4j-admin set-initial-password blood && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
 && chmod +x $STARTUPDIR/custom_startup.sh
 
 #Permissions
