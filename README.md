@@ -29,6 +29,12 @@ sudo docker build -t {application-name}:latest -f Custom_Image_Kasm/{application
 
 Remove the workspace-images folder if no longer required and then configure your new Kasm Workspace with the {application-name}:latest image that you have just built
 
+## Plans for the future
+
+* I plan to update these, eventually, so that they run as single apps
+* To keep streamlining as much as possible
+* Slowly making my way through different repos and attempting to bring in new tools
+
 ## Docker Hub
 
 Find the application repository below and add this to the Workspace "Docker Image" field
