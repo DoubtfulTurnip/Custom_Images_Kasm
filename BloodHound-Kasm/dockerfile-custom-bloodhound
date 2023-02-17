@@ -46,8 +46,7 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
     && mv azurehound /usr/bin/ \
     && rm -rf azurehound-linux-amd64
 
-# Custom Queries
-RUN 
+
 
 ################################################################################################################
 
