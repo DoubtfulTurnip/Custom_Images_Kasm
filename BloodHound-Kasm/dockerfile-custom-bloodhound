@@ -36,7 +36,8 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
 #Configure BloodHound
 RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip \
     && unzip BloodHound-linux-x64.zip \
-    && mv BloodHound-linux-x64 bloodhound-kasm \
+    && mv BloodHound-linux-x64/BloodHound /usr/bin/ \
+    && rm -rf BloodHound-linux-x64 \
     && rm BloodHound-linux-x64.zip 
 
 #Configure AzureHound Collector
