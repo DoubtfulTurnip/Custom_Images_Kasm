@@ -14,6 +14,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV KASM_RX_HOME $STARTUPDIR/kasmrx
 ENV INST_SCRIPTS $STARTUPDIR/install
 
+ARG neo4j=4.4.15
 
 ### Install Tools
 # Install Firefox
@@ -30,7 +31,7 @@ RUN apt-get install git -y
 RUN wget -nv -O - https://debian.neo4j.com/neotechnology.gpg.key | tee /etc/apt/trusted.gpg.d/neo4j.asc &&\
     echo 'deb https://debian.neo4j.com stable 4.4' | tee /etc/apt/sources.list.d/neo4j.list &&\
     apt-get update &&\
-    && apt-get install -y -qq neo4j=1:4.4.15
+    apt-get install -y -qq neo4j=1:$neo4j
 
 # BloodHound
 RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip -nv -P /tmp &&\
