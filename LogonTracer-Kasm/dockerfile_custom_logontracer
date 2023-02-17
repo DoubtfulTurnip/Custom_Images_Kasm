@@ -26,7 +26,6 @@ RUN apt-get install git
 ##LOGONTRACER
 #Configure Java
 RUN add-apt-repository -y ppa:openjdk-r/ppa
-RUN apt-get update
 
 #Configure neo4j
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
