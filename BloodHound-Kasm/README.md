@@ -1,3 +1,3 @@
 
-Ruthlessly stolen example from modified for Kasm
+Ruthlessly stolen example modified for Kasm
 https://github.com/belane/docker-bloodhound
