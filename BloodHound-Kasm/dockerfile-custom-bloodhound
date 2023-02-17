@@ -40,8 +40,7 @@ RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
 RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip \
     && unzip BloodHound-linux-x64.zip \
     && mv BloodHound-linux-x64 bloodhound-kasm \
-    && rm BloodHound-linux-x64.zip \
-    && ln -s bloodhound-kasm/BloodHound /usr/bin/BloodHound
+    && rm BloodHound-linux-x64.zip 
 
 
 
