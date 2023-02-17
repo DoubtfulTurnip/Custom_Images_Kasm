@@ -49,5 +49,8 @@ Find the application repository below and add this to the Workspace "Docker Imag
 * [Spiderfoot](https://github.com/smicallef/spiderfoot)
 
   [Docker Hub](https://hub.docker.com/r/bukshee/spiderfoot-kasm)
+  
+* [BloodHound](https://github.com/BloodHoundAD/BloodHound)
 
+  [Docker Hub](https://hub.docker.com/r/bukshee/bloodhound-kasm)
 
