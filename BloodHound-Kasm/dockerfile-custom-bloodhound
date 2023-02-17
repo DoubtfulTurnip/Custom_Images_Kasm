@@ -47,7 +47,7 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
     && rm -rf azurehound-linux-amd64
 
 # Custom Queries
-RUN wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P /root/.config/bloodhound/
+RUN 
 
 ################################################################################################################
 
@@ -57,8 +57,14 @@ COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 # BloodHound Config
 COPY $START_SCRIPT/config.json /root/.config/bloodhound/
 RUN chmod +x /home/kasm-user/startup.sh
-RUN echo "/usr/bin/desktop_ready && neo4j start && neo4j-admin set-initial-password blood && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
-&& chmod +x $STARTUPDIR/custom_startup.sh
+RUN echo '#!/usr/bin/env bash\n\
+    neo4j-admin set-initial-password blood \n\
+    neo4j start\n\
+    cp -n /opt/BloodHound-linux-x64/resources/app/Collectors/SharpHound.* /home/kasm-user/Desktop/\n\
+    wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P //home/kasm-user/.config/bloodhound/ && /home/kasm-user/startup.sh\n\
+    sleep 7; /opt/BloodHound-linux-x64/BloodHound --no-sandbox 2>/dev/null\n' > $STARTUPDIR/custom_startup.sh \
+    && chmod +x $STARTUPDIR/custom_startup.sh
+
 
 #Permissions
 RUN $STARTUPDIR/set_user_permission.sh $HOME
