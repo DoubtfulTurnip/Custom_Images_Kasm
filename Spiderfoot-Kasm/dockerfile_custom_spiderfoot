@@ -23,18 +23,18 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 #Install Git
 RUN apt-get install git -y
 
+################################################################################################################
+
 ##SPIDERFOOT
 #configure logontracer
 RUN apt-get install python3-pip -y
 RUN git clone https://github.com/smicallef/spiderfoot.git \
     && pip3 install -r spiderfoot/requirements.txt 
 
-# Place database and logs outside installation directory
+# Create persistent folders
 ENV SPIDERFOOT_DATA /var/lib/spiderfoot
 ENV SPIDERFOOT_LOGS /var/lib/spiderfoot/log
 ENV SPIDERFOOT_CACHE /var/lib/spiderfoot/cache
-
-# Run everything as one command so that only one layer is created
 RUN mkdir -p $SPIDERFOOT_DATA || true \
     && mkdir -p $SPIDERFOOT_LOGS || true \
     && mkdir -p $SPIDERFOOT_CACHE || true \
@@ -42,25 +42,23 @@ RUN mkdir -p $SPIDERFOOT_DATA || true \
     && chown 1000:1000 $SPIDERFOOT_LOGS \
     && chown 1000:1000 $SPIDERFOOT_CACHE
 
+################################################################################################################
 
+##Startup-Script
 ENV START_SCRIPT Custom_Images_Kasm/Spiderfoot-Kasm/
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
-
 RUN echo "/usr/bin/desktop_ready && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
 && chmod +x $STARTUPDIR/custom_startup.sh
-    
-#ADD ./src/common/scripts $STARTUPDIR
+
+
+#Permissions
 RUN $STARTUPDIR/set_user_permission.sh $HOME
-
 RUN chown 1000:1000 $HOME
-
 ENV HOME /home/kasm-user
 WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R 1000:1000 $HOME
 
 USER 1000
-
-
 
 CMD ["--tail-log"]
