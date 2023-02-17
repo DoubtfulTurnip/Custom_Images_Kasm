@@ -1,11 +1,11 @@
 #!/bin/sh
 echo "Starting LogonTracer..."
 
-sleep 20s
+sleep 30s
 
 cd /home/kasm-user/LogonTracer/ && python3 logontracer.py -r -o 8080 -u neo4j -p neo4j -s localhost &
 
-sleep 20s
+sleep 5s
 
 echo "Starting Firefox..."
 
