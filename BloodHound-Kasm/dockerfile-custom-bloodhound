@@ -48,7 +48,7 @@ RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azu
 ################################################################################################################
 
 ##Startup-Script
-ENV START_SCRIPT Custom_Images_Kasm/LogonTracer-Kasm/
+ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm/
 COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
 RUN chmod +x /home/kasm-user/startup.sh
 RUN echo "/usr/bin/desktop_ready && neo4j start && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
