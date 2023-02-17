@@ -62,7 +62,7 @@ RUN echo '#!/usr/bin/env bash\n\
     cp -n /opt/BloodHound-linux-x64/resources/app/Collectors/SharpHound.* /home/kasm-user/Desktop/\n\
     wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P /home/kasm-user/.config/bloodhound/\n\ 
     /home/kasm-user/startup.sh\n\
-    sleep 7; /opt/BloodHound-linux-x64/BloodHound --no-sandbox 2>/dev/null\n' > $STARTUPDIR/custom_startup.sh \
+    sleep 15; /opt/BloodHound-linux-x64/BloodHound --no-sandbox 2>/dev/null\n' > $STARTUPDIR/custom_startup.sh \
     && chmod +x $STARTUPDIR/custom_startup.sh
 
 
