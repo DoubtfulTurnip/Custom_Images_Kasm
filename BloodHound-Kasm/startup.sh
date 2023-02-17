@@ -7,8 +7,7 @@ git clone https://github.com/BloodHoundAD/BloodHound.git $HOME/Desktop/BLOODHOUN
 && rm $HOME/Desktop/Collectors/AzureHound.md \
 && rm -rf $HOME/Desktop/BLOODHOUND \
 && sleep 5s \
-&& chmod +x $HOME/bloodhound-kasm/BloodHound \
-&& $HOME/bloodhound-kasm/BloodHound --no-sandbox 
+&& BloodHound --no-sandbox 
 
 
 
