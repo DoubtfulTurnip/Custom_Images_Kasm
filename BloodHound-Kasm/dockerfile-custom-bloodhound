@@ -22,6 +22,7 @@ COPY ./src/ubuntu/install/misc $INST_SCRIPTS/misc/
 RUN bash $INST_SCRIPTS/misc/install_tools.sh && rm -rf $INST_SCRIPTS/misc/
 # Install Firefox
 COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
+RUN true
 COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
 RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
 
