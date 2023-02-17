@@ -21,7 +21,7 @@ RUN true
 COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
 RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
 
-RUN apt-get install git 
+RUN apt-get install git -y
 
 ##LOGONTRACER
 #Configure Java
@@ -31,11 +31,11 @@ RUN add-apt-repository -y ppa:openjdk-r/ppa
 RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
     && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
     && apt-get update \
-    && apt-get install neo4j
+    && apt-get install neo4j -y
 
 
 #configure logontracer
-RUN apt-get install python3-pip
+RUN apt-get install python3-pip -y
 RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
     && pip3 install -r LogonTracer/requirements.txt 
 
