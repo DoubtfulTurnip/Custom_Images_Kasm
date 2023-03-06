@@ -32,14 +32,15 @@ RUN apt-get install git -y
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y wget gnupg git curl sudo openssh-server && \
-    mkdir /home/${SIFT_USER} && \
-    usermod -a -G sudo ${SIFT_USER} && \
+    mkdir -p /home/${SIFT_USER} && \
     echo "${SIFT_USER}:${SIFT_PASSWORD}" | chpasswd && \
     curl -Lo /tmp/cast_${CAST_VERSION}_linux_amd64.deb https://github.com/ekristen/cast/releases/download/${CAST_VERSION}/cast_${CAST_VERSION}_linux_amd64.deb && \
     apt-get install /tmp/cast_${CAST_VERSION}_linux_amd64.deb -y
     
-RUN groupadd ${SIFT_USER} && \
-    useradd  -g ${SIFT_USER} -d /home/${SIFT_USER} -s /bin/bash -c "${SIFT_DESCRIPTION}" ${SIFT_USER}     
+RUN useradd  -g ${SIFT_USER} -d /home/${SIFT_USER} -s /bin/bash -c "${SIFT_DESCRIPTION}" ${SIFT_USER} && \
+    groupadd ${SIFT_USER} && \
+    usermod -a -G sudo ${SIFT_USER} 
+   
 ###
 USER ${SIFT_USER}
 
