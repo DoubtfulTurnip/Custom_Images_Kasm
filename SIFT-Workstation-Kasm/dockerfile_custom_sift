@@ -32,8 +32,8 @@ RUN apt-get install git -y
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y wget gnupg git curl sudo openssh-server && \
-    groupadd -r ${SIFT_USER} && \
-    useradd -r -g ${SIFT_USER} -d /home/${SIFT_USER} -s /bin/bash -c "${SIFT_DESCRIPTION}" ${SIFT_USER} && \
+    groupadd -R ${SIFT_USER} && \
+    useradd -R -g ${SIFT_USER} -d /home/${SIFT_USER} -s /bin/bash -c "${SIFT_DESCRIPTION}" ${SIFT_USER} && \
     mkdir /home/${SIFT_USER} && \
     usermod -a -G sudo ${SIFT_USER} && \
     echo "${SIFT_USER}:${SIFT_PASSWORD}" | chpasswd && \
