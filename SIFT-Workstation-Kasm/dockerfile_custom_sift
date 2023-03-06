@@ -4,7 +4,7 @@ FROM kasmweb/$BASE_IMAGE:$BASE_TAG
 
 USER root
 
-ENV HOME /home/kasm-default-profile
+ENV HOME /home/sansforensics
 ENV STARTUPDIR /dockerstartup
 WORKDIR $HOME
 
@@ -45,11 +45,11 @@ RUN sift install --user=sansforensics
 
 #Permissions
 RUN $STARTUPDIR/set_user_permission.sh $HOME
-RUN chown 0:0 $HOME
-ENV HOME /home/kasm-user
+RUN chown sansforensics:sansforensics $HOME
+ENV HOME /home/sansforensics
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 0:0 $HOME
+RUN mkdir -p $HOME && chown -R sansforensics:sansforensics $HOME
 
-USER 0
+USER sansforensics
 
 CMD ["--tail-log"]
