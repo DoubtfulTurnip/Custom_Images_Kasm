@@ -28,7 +28,7 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 #Install Git
 RUN apt-get install git -y 
 
-===
+###
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y wget gnupg git curl sudo openssh-server && \
@@ -39,11 +39,11 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     echo "${SIFT_USER}:${SIFT_PASSWORD}" | chpasswd && \
     curl -Lo /tmp/cast_${CAST_VERSION}_linux_amd64.deb https://github.com/ekristen/cast/releases/download/${CAST_VERSION}/cast_${CAST_VERSION}_linux_amd64.deb && \
     apt-get install /tmp/cast_${CAST_VERSION}_linux_amd64.deb -y
-===
+###
 USER ${SIFT_USER}
 
 RUN echo ${SIFT_PASSWORD} | sudo -S cast install --mode=server teamdfir/sift-saltstack
-===
+###
 USER root
 RUN echo "UseDNS no" >> /etc/ssh/sshd_config && \
     echo "GSSAPIAuthentication no" >> /etc/ssh/sshd_config && \
