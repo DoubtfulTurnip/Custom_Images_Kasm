@@ -1,9 +1,6 @@
 ARG BASE_TAG="develop"
 ARG BASE_IMAGE="core-ubuntu-focal"
-ARG CAST_VERSION=v0.14.0
-ARG SIFT_USER=sansforensics
-ARG SIFT_DESCRIPTION="SANSForensics User"
-ARG SIFT_PASSWORD="forensics"
+
 FROM kasmweb/$BASE_IMAGE:$BASE_TAG
 
 USER root
@@ -29,11 +26,16 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 RUN apt-get install git -y 
 
 ###
+ARG SIFT_USER=sansforensics
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y wget gnupg git curl sudo openssh-server && \
     mkdir -p /home/${SIFT_USER} 
-    
+
+ARG CAST_VERSION=v0.14.0
+ARG SIFT_USER=sansforensics
+ARG SIFT_DESCRIPTION="SANSForensics User"
+ARG SIFT_PASSWORD="forensics"
 RUN curl -Lo cast_${CAST_VERSION}_linux_amd64.deb https://github.com/ekristen/cast/releases/download/tag/${CAST_VERSION}/cast_${CAST_VERSION}_linux_amd64.deb && \
     apt-get install cast_${CAST_VERSION}_linux_amd64.deb -y
     
