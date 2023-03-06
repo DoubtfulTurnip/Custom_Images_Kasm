@@ -36,7 +36,7 @@ RUN wget https://github.com/sans-dfir/sift-cli/releases/latest/download/sift-cli
     mv sift-cli-linux /usr/local/bin/sift && \
     chmod 755 /usr/local/bin/sift 
 
-RUN sift install
+RUN sift install --user root
 
 
 
