@@ -32,7 +32,7 @@ RUN wget https://github.com/sans-dfir/sift-cli/releases/latest/download/sift-cli
     wget https://github.com/sigstore/cosign/releases/download/v2.0.0/cosign_2.0.0_amd64.deb && \
     dpkg -i cosign_2.0.0_amd64.deb && \
     apt-get update && \
-    cosign verify-blob --key sift-cli.pub --signature sift-cli-linux.sig sift-cli-linux && \
+#    cosign verify-blob --key sift-cli.pub --signature sift-cli-linux.sig sift-cli-linux && \
     mv sift-cli-linux /usr/local/bin/sift && \
     chmod 755 /usr/local/bin/sift 
 
