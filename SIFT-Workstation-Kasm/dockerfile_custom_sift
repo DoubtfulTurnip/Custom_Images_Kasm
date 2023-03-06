@@ -38,8 +38,9 @@ RUN wget https://github.com/sans-dfir/sift-cli/releases/latest/download/sift-cli
 
 RUN useradd -m sansforensics && echo sansforensics:forensics| chpasswd
 RUN mkdir -p /etc/sudoers.d/ && echo "sansforensics      ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers.d/sansforensics
+RUN apt-get update && apt-get install -y --no-install-recommends --allow-unauthenticated wget sudo gnupg2 ca-certificates
 ENV SUDO_USER root
-RUN apt-get update && sift install --user=sansforensics --mode=server
+RUN apt-get update && sift install --user=sansforensics 
 
 #Permissions
 RUN $STARTUPDIR/set_user_permission.sh $HOME
