@@ -14,7 +14,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV KASM_RX_HOME $STARTUPDIR/kasmrx
 ENV INST_SCRIPTS $STARTUPDIR/install
 
-ARG neo4j=4.4.15
+
 
 ### Install Tools
 # Install Firefox
@@ -25,6 +25,17 @@ RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefo
 RUN apt-get install git -y 
 
 
+
+RUN wget https://github.com/sans-dfir/sift-cli/releases/latest/sift-cli-linux && \
+    wget https://github.com/sans-dfir/sift-cli/releases/latest/sift-cli-linux.sig && \
+    wget https://github.com/sans-dfir/sift-cli/releases/latest/sift-cli.pub && \
+    apt update && apt install golang && \
+    go install github.com/sigstore/cosign/v2/cmd/cosign@v2.0.0 && \
+    cosign verify-blob --key sift-cli.pub --signature sift-cli-linux.sig sift-cli-linux && \
+    mv sift-cli-linux /usr/local/bin/sift && \
+    chmod 755 /usr/local/bin/sift 
+
+RUN sift install
 
 
 
