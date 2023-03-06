@@ -29,7 +29,7 @@ RUN apt-get install git -y
 RUN wget https://github.com/sans-dfir/sift-cli/releases/latest/download/sift-cli-linux && \
     wget https://github.com/sans-dfir/sift-cli/releases/latest/download/sift-cli-linux.sig && \
     wget https://github.com/sans-dfir/sift-cli/releases/latest/download/sift-cli.pub && \
-    apt update && apt install golang && \
+    apt-get update && apt-get install golang && \
     go install github.com/sigstore/cosign/v2/cmd/cosign@v2.0.0 && \
     cosign verify-blob --key sift-cli.pub --signature sift-cli-linux.sig sift-cli-linux && \
     mv sift-cli-linux /usr/local/bin/sift && \
