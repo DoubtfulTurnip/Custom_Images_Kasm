@@ -37,8 +37,7 @@ RUN wget https://github.com/sans-dfir/sift-cli/releases/latest/download/sift-cli
     chmod 755 /usr/local/bin/sift 
 
 
-RUN useradd -m -s /bin/bash sansforensics \
-    yes "forensics" | passwd sansforensics
+RUN useradd -m sansforensics
 
 RUN echo "sansforensics      ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers.d/sansforensics
 
