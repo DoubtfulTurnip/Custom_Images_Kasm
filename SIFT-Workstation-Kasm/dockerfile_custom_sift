@@ -41,10 +41,10 @@ RUN curl -Lo cast_${CAST_VERSION}_linux_amd64.deb https://github.com/ekristen/ca
     
 
     
-RUN useradd  -g ${SIFT_USER} -d /home/${SIFT_USER} -s /bin/bash -c "${SIFT_DESCRIPTION}" ${SIFT_USER} && \
-    groupadd ${SIFT_USER} && \
+RUN groupadd ${SIFT_USER} && \
+    useradd  -g ${SIFT_USER} -d /home/${SIFT_USER} -s /bin/bash -c "${SIFT_DESCRIPTION}" ${SIFT_USER} && \
     usermod -a -G sudo ${SIFT_USER} && \
-    echo "${SIFT_USER}:${SIFT_PASSWORD}" | chpasswd && \
+    echo "${SIFT_USER}:${SIFT_PASSWORD}" | chpasswd 
    
 ###
 USER ${SIFT_USER}
