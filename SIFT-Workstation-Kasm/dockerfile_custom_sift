@@ -49,7 +49,7 @@ RUN groupadd ${SIFT_USER} && \
 ###
 USER ${SIFT_USER}
 
-RUN echo ${SIFT_PASSWORD} | sudo -S cast install --mode=server teamdfir/sift-saltstack
+RUN echo ${SIFT_PASSWORD} | sudo -S cast install teamdfir/sift-saltstack
 ###
 USER root
 RUN echo "UseDNS no" >> /etc/ssh/sshd_config && \
