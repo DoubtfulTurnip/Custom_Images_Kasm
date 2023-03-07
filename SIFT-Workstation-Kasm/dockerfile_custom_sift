@@ -37,7 +37,7 @@ ARG SIFT_USER=sansforensics
 ARG SIFT_DESCRIPTION="SANSForensics User"
 ARG SIFT_PASSWORD="forensics"
 RUN curl -Lo cast_${CAST_VERSION}_linux_amd64.deb https://github.com/ekristen/cast/releases/download/${CAST_VERSION}/cast_${CAST_VERSION}_linux_amd64.deb && \
-    dpkg -i cast_${CAST_VERSION}_linux_amd64.deb -y
+    dpkg -i cast_${CAST_VERSION}_linux_amd64.deb 
     
 
     
