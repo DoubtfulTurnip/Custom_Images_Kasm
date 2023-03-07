@@ -52,17 +52,7 @@ USER ${SIFT_USER}
 RUN echo ${SIFT_PASSWORD} | sudo -S cast install teamdfir/sift-saltstack
 ###
 USER root
-RUN echo "UseDNS no" >> /etc/ssh/sshd_config && \
-    echo "GSSAPIAuthentication no" >> /etc/ssh/sshd_config && \
-    echo "PrintLastLog yes" >> /etc/ssh/sshd_config && \
-    echo "TCPKeepAlive yes" >> /etc/ssh/sshd_config && \
-    echo "X11DisplayOffset 10" >> /etc/ssh/sshd_config && \
-    echo "X11UseLocalhost no" >> /etc/ssh/sshd_config && \
-    git clone https://github.com/digitalsleuth/color_ssh_terminal /tmp/colorssh && \
-    cd /tmp/colorssh && cat color_ssh_terminal >> /home/${SIFT_USER}/.bashrc && cd /tmp && rm -rf colorssh && \
-    echo source .bashrc >> /home/${SIFT_USER}/.bash_profile && \
-    chown -R ${SIFT_USER}:${SIFT_USER} /home/${SIFT_USER} && \
-    apt-get autoremove -y && apt-get purge && apt-get clean && \
+RUN apt-get autoremove -y && apt-get purge && apt-get clean && \
     rm -rf /srv && \
     rm -rf /var/cache/salt/* && \
     rm -rf /root/.cache/* && \
@@ -73,8 +63,8 @@ RUN $STARTUPDIR/set_user_permission.sh $HOME
 RUN chown sansforensics:sansforensics $HOME
 ENV HOME /home/sansforensics
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R sansforensics:sansforensics $HOME
+RUN mkdir -p $HOME && chown -R ${SIFT_USER}:${SIFT_USER} $HOME
 
-USER sansforensics
+USER ${SIFT_USER}
 
 CMD ["--tail-log"]
