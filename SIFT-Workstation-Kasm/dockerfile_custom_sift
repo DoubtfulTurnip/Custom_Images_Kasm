@@ -49,7 +49,7 @@ RUN groupadd ${SIFT_USER} && \
 ###
 USER ${SIFT_USER}
 
-RUN echo ${SIFT_PASSWORD} | sudo -S cast install teamdfir/sift-saltstack
+RUN echo ${SIFT_PASSWORD} | sudo -S cast install teamdfir/sift-saltstack --mode=server
 ###
 USER root
 RUN apt-get autoremove -y && apt-get purge && apt-get clean && \
