@@ -57,6 +57,6 @@ ENV HOME /home/sansforensics
 WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R ${SIFT_USER}:${SIFT_USER} $HOME
 
-USER ${SIFT_USER}
+USER 0
 
 CMD ["--tail-log"]
