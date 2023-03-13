@@ -17,40 +17,27 @@ ENV INST_SCRIPTS $STARTUPDIR/install
 
 
 
-### Install Tools
-# Install Firefox
-#COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
-#COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
-#RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
-#Install Git
-#RUN apt-get install git -y 
-
 ###
+ARG CAST_VERSION=v0.14.0
+ARG SIFT_DESCRIPTION="SANSForensics User"
+ARG SIFT_PASSWORD="forensics"
 ARG SIFT_USER=sansforensics
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y wget gnupg git curl sudo openssh-server && \
-    mkdir -p /home/${SIFT_USER} 
-
-ARG CAST_VERSION=v0.14.0
-ARG SIFT_USER=sansforensics
-ARG SIFT_DESCRIPTION="SANSForensics User"
-ARG SIFT_PASSWORD="forensics"
-RUN curl -Lo cast_${CAST_VERSION}_linux_amd64.deb https://github.com/ekristen/cast/releases/download/${CAST_VERSION}/cast_${CAST_VERSION}_linux_amd64.deb && \
-    dpkg -i cast_${CAST_VERSION}_linux_amd64.deb 
-    
-
-    
-RUN groupadd ${SIFT_USER} && \
+    mkdir -p /home/${SIFT_USER} && \
+    curl -Lo cast_${CAST_VERSION}_linux_amd64.deb https://github.com/ekristen/cast/releases/download/${CAST_VERSION}/cast_${CAST_VERSION}_linux_amd64.deb && \
+    dpkg -i cast_${CAST_VERSION}_linux_amd64.deb && \
+    groupadd ${SIFT_USER} && \
     useradd  -g ${SIFT_USER} -d /home/${SIFT_USER} -s /bin/bash -c "${SIFT_DESCRIPTION}" ${SIFT_USER} && \
     usermod -a -G sudo ${SIFT_USER} && \
     echo "${SIFT_USER}:${SIFT_PASSWORD}" | chpasswd 
    
 ###
 USER ${SIFT_USER}
-
 RUN echo ${SIFT_PASSWORD} | sudo -S cast install --mode=server teamdfir/sift-saltstack 
 ###
+
 USER root
 RUN apt-get autoremove -y && apt-get purge && apt-get clean && \
     rm -rf /srv && \
