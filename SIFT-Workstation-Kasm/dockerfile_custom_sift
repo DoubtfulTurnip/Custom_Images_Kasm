@@ -18,7 +18,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     mkdir /home/${SIFT_USER} && \
     touch /home/${SIFT_USER}/.Xauthority && \
     chown -R ${SIFT_USER}:${SIFT_USER} /home/${SIFT_USER} && \
-    usermod -a -G sudo ${SIFT_USER} && \
+    usermod -a -G sudo 1000 && \
     echo "${SIFT_USER}:${SIFT_PASSWORD}" | chpasswd && \
     wget https://github.com/ekristen/cast/releases/download/v${CAST_VERSION}/cast_v${CAST_VERSION}_linux_amd64.deb && \
     dpkg -i /tmp/cast_v${CAST_VERSION}_linux_amd64.deb && \
