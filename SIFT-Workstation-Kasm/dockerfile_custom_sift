@@ -35,7 +35,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
    
 ###
 USER ${SIFT_USER}
-RUN echo ${SIFT_PASSWORD} | sudo -S cast install --mode=server teamdfir/sift-saltstack 
+RUN echo ${SIFT_PASSWORD} | sudo -S cast install teamdfir/sift-saltstack 
 ###
 
 USER root
@@ -44,6 +44,10 @@ RUN apt-get autoremove -y && apt-get purge && apt-get clean && \
     rm -rf /var/cache/salt/* && \
     rm -rf /root/.cache/* && \
     unset DEBIAN_FRONTEND
+
+
+
+
 
 #Permissions
 RUN $STARTUPDIR/set_user_permission.sh $HOME
