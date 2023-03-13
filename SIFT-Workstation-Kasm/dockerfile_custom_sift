@@ -14,7 +14,6 @@ WORKDIR /tmp
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y wget gnupg git openssh-server && \
-    groupadd -r -g 1000 ${SIFT_USER} && \
     useradd -r -g ${SIFT_USER} -d /home/${SIFT_USER} -s /bin/bash -c "${SIFT_DESCRIPTION}" -u 1000 ${SIFT_USER} && \
     mkdir /home/${SIFT_USER} && \
     touch /home/${SIFT_USER}/.Xauthority && \
