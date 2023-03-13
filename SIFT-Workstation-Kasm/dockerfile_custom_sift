@@ -5,9 +5,11 @@ FROM kasmweb/$BASE_IMAGE:$BASE_TAG
 
 USER root
 
-ENV HOME /home/sansforensics
+
+ENV HOME /home/kasm-default-profile
 ENV STARTUPDIR /dockerstartup
 WORKDIR $HOME
+
 
 
 ### Envrionment config
@@ -16,46 +18,31 @@ ENV KASM_RX_HOME $STARTUPDIR/kasmrx
 ENV INST_SCRIPTS $STARTUPDIR/install
 
 
-
 ###
 ARG CAST_VERSION=v0.14.0
-ARG SIFT_DESCRIPTION="SANSForensics User"
-ARG SIFT_PASSWORD="forensics"
-ARG SIFT_USER=sansforensics
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y wget gnupg git curl sudo openssh-server && \
-    mkdir -p /home/${SIFT_USER} && \
     curl -Lo cast_${CAST_VERSION}_linux_amd64.deb https://github.com/ekristen/cast/releases/download/${CAST_VERSION}/cast_${CAST_VERSION}_linux_amd64.deb && \
-    dpkg -i cast_${CAST_VERSION}_linux_amd64.deb && \
-    groupadd ${SIFT_USER} && \
-    useradd  -g ${SIFT_USER} -d /home/${SIFT_USER} -s /bin/bash -c "${SIFT_DESCRIPTION}" ${SIFT_USER} && \
-    usermod -a -G sudo ${SIFT_USER} && \
-    echo "${SIFT_USER}:${SIFT_PASSWORD}" | chpasswd 
+    dpkg -i cast_${CAST_VERSION}_linux_amd64.deb 
    
 ###
-USER ${SIFT_USER}
-RUN echo ${SIFT_PASSWORD} | sudo -S cast install --mode=server teamdfir/sift-saltstack 
+RUN cast install --mode=server teamdfir/sift-saltstack 
 ###
 
-USER root
 RUN apt-get autoremove -y && apt-get purge && apt-get clean && \
     rm -rf /srv && \
     rm -rf /var/cache/salt/* && \
     rm -rf /root/.cache/* && \
-    unset DEBIAN_FRONTEND
-
-
-
 
 
 #Permissions
-#RUN $STARTUPDIR/set_user_permission.sh $HOME
-RUN chown sansforensics:sansforensics $HOME
-ENV HOME /home/sansforensics
+RUN $STARTUPDIR/set_user_permission.sh $HOME
+RUN chown 1000:1000 $HOME
+ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R ${SIFT_USER}:${SIFT_USER} $HOME
+RUN mkdir -p $HOME && chown -R 1000:1000 $HOME
 
-USER ${SIFT_USER}
+USER 1000
 
 CMD ["--tail-log"]
