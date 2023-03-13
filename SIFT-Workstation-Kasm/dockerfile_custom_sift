@@ -21,7 +21,7 @@ ENV INST_SCRIPTS $STARTUPDIR/install
 ARG CAST_VERSION=v0.14.0
 ARG SIFT_DESCRIPTION="SANSForensics User"
 ARG SIFT_PASSWORD="forensics"
-ARG SIFT_USER=1000
+ARG SIFT_USER=sansforensics
 ARG SIFT_GROUP=sansforensics
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
