@@ -1,4 +1,4 @@
-ARG BASE_TAG="develop"
+ARG BASE_TAG="1.13.0-rolling"
 ARG BASE_IMAGE="core-ubuntu-focal"
 FROM kasmweb/$BASE_IMAGE:$BASE_TAG
 
