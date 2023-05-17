@@ -12,13 +12,11 @@ WORKDIR $HOME
 #Install Git
 RUN apt-get update && \
 apt-get install git -y
-
 ##SPIDERFOOT
 #configure logontracer
 RUN apt-get install python3-pip -y
 RUN git clone https://github.com/smicallef/spiderfoot.git \
     && pip3 install -r spiderfoot/requirements.txt 
-
 # Create persistent folders
 ENV SPIDERFOOT_DATA /var/lib/spiderfoot
 ENV SPIDERFOOT_LOGS /var/lib/spiderfoot/log
@@ -29,22 +27,12 @@ RUN mkdir -p $SPIDERFOOT_DATA || true \
     && chown 1000:0 $SPIDERFOOT_DATA \
     && chown 1000:0 $SPIDERFOOT_LOGS \
     && chown 1000:0 $SPIDERFOOT_CACHE
-
 # Clean up
 RUN apt-get clean &&\
     apt-get clean autoclean &&\
     apt-get autoremove -y &&\
     rm -rf /tmp/* &&\
     rm -rf /var/lib/{apt,dpkg,cache,log}/
-
-##Startup-Script
-ENV START_SCRIPT Custom_Images_Kasm/Spiderfoot-Kasm/
-COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
-RUN chmod +x /home/kasm-user/startup.sh
-RUN echo "/usr/bin/desktop_ready && /home/kasm-user/startup.sh" > $STARTUPDIR/custom_startup.sh \
-&& chmod +x $STARTUPDIR/custom_startup.sh
-
-
 
 # Install Firefox
 COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
