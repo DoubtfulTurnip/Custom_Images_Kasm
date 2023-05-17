@@ -1,0 +1,69 @@
+FROM kasmweb/core-ubuntu-focal:1.13.0
+USER root
+
+ENV HOME /home/kasm-default-profile
+ENV STARTUPDIR /dockerstartup
+ENV INST_SCRIPTS $STARTUPDIR/install
+WORKDIR $HOME
+
+
+######### Customize Container Here ###########
+
+
+##LOGONTRACER
+#Configure neo4j
+RUN wget -O - https://debian.neo4j.com/neotechnology.gpg.key | apt-key add - \
+    && echo 'deb https://debian.neo4j.com stable 4.0' | tee /etc/apt/sources.list.d/neo4j.list \
+    && add-apt-repository -y ppa:openjdk-r/ppa \
+    && apt-get update \
+    && apt-get install neo4j -y
+#configure logontracer
+RUN apt-get install python3-pip -y
+RUN git clone https://github.com/JPCERTCC/LogonTracer.git \
+    && pip3 install -r LogonTracer/requirements.txt 
+# Clean up
+RUN apt-get clean &&\
+    apt-get clean autoclean &&\
+    apt-get autoremove -y &&\
+    rm -rf /tmp/* &&\
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
+# Add sudo
+RUN apt-get update \
+    && apt-get install -y sudo \
+    && echo 'kasm-user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers \
+    && rm -rf /var/lib/apt/list/*
+
+
+# Install Firefox
+COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
+COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
+RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
+# Update the desktop environment to be optimized for a single application
+RUN cp $HOME/.config/xfce4/xfconf/single-application-xfce-perchannel-xml/* $HOME/.config/xfce4/xfconf/xfce-perchannel-xml/
+RUN cp /usr/share/extra/backgrounds/bg_kasm.png /usr/share/extra/backgrounds/bg_default.png
+RUN apt-get remove -y xfce4-panel
+# Setup the custom startup script that will be invoked when the container starts
+ENV LAUNCH_URL  http://localhost:8080
+ENV KASM_RESTRICTED_FILE_CHOOSER=1
+
+
+#Startup-Script
+ENV START_SCRIPT Custom_Images_Kasm/LogonTracer-Kasm/
+COPY $START_SCRIPT/startup.sh $STARTUPDIR/startup.sh
+RUN echo "sh /dockerstartup/startup.sh" > $STARTUPDIR/custom_startup.sh \
+&& chown 1000:0 $STARTUPDIR/custom_startup.sh \
+&& chmod +x $STARTUPDIR/custom_startup.sh 
+
+
+
+
+######### End Customizations ###########
+
+RUN chown 1000:0 $HOME
+RUN $STARTUPDIR/set_user_permission.sh $HOME
+
+ENV HOME /home/kasm-user
+WORKDIR $HOME
+RUN mkdir -p $HOME && chown -R 1000:0 $HOME
+
+USER 1000
