@@ -1,29 +1,17 @@
-ARG BASE_TAG="develop"
-ARG BASE_IMAGE="core-ubuntu-focal"
-FROM kasmweb/$BASE_IMAGE:$BASE_TAG
-
+FROM kasmweb/core-ubuntu-focal:1.13.0
 USER root
 
 ENV HOME /home/kasm-default-profile
 ENV STARTUPDIR /dockerstartup
+ENV INST_SCRIPTS $STARTUPDIR/install
 WORKDIR $HOME
 
-### Envrionment config
-ENV DEBIAN_FRONTEND noninteractive
-ENV KASM_RX_HOME $STARTUPDIR/kasmrx
-ENV INST_SCRIPTS $STARTUPDIR/install
 
+######### Customize Container Here ###########
 
-### Install Tools
-# Install Firefox
-COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
-RUN true
-COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
-RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
 #Install Git
-RUN apt-get install git -y
-
-################################################################################################################
+RUN apt-get update && \
+apt-get install git -y
 
 ##SPIDERFOOT
 #configure logontracer
@@ -38,9 +26,9 @@ ENV SPIDERFOOT_CACHE /var/lib/spiderfoot/cache
 RUN mkdir -p $SPIDERFOOT_DATA || true \
     && mkdir -p $SPIDERFOOT_LOGS || true \
     && mkdir -p $SPIDERFOOT_CACHE || true \
-    && chown 1000:1000 $SPIDERFOOT_DATA \
-    && chown 1000:1000 $SPIDERFOOT_LOGS \
-    && chown 1000:1000 $SPIDERFOOT_CACHE
+    && chown 1000:0 $SPIDERFOOT_DATA \
+    && chown 1000:0 $SPIDERFOOT_LOGS \
+    && chown 1000:0 $SPIDERFOOT_CACHE
 
 # Clean up
 RUN apt-get clean &&\
@@ -48,7 +36,6 @@ RUN apt-get clean &&\
     apt-get autoremove -y &&\
     rm -rf /tmp/* &&\
     rm -rf /var/lib/{apt,dpkg,cache,log}/
-################################################################################################################
 
 ##Startup-Script
 ENV START_SCRIPT Custom_Images_Kasm/Spiderfoot-Kasm/
@@ -58,13 +45,34 @@ RUN echo "/usr/bin/desktop_ready && /home/kasm-user/startup.sh" > $STARTUPDIR/cu
 && chmod +x $STARTUPDIR/custom_startup.sh
 
 
-#Permissions
+
+# Install Firefox
+COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
+COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
+RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
+# Update the desktop environment to be optimized for a single application
+RUN cp $HOME/.config/xfce4/xfconf/single-application-xfce-perchannel-xml/* $HOME/.config/xfce4/xfconf/xfce-perchannel-xml/
+RUN cp /usr/share/extra/backgrounds/bg_kasm.png /usr/share/extra/backgrounds/bg_default.png
+RUN apt-get remove -y xfce4-panel
+# Setup the custom startup script that will be invoked when the container starts
+ENV LAUNCH_URL  http://localhost:5001
+ENV KASM_RESTRICTED_FILE_CHOOSER=1
+
+
+#Startup-Script
+ENV START_SCRIPT Custom_Images_Kasm/Spiderfoot-Kasm/
+COPY $START_SCRIPT/startup.sh $STARTUPDIR/startup.sh
+RUN echo "sh /dockerstartup/startup.sh" > $STARTUPDIR/custom_startup.sh \
+&& chown 1000:0 $STARTUPDIR/custom_startup.sh \
+&& chmod +x $STARTUPDIR/custom_startup.sh
+
+######### End Customizations ###########
+
+RUN chown 1000:0 $HOME
 RUN $STARTUPDIR/set_user_permission.sh $HOME
-RUN chown 1000:1000 $HOME
+
 ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 1000:1000 $HOME
+RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
 USER 1000
-
-CMD ["--tail-log"]
