@@ -1,12 +1,11 @@
 # Custom Images for Kasm
 
-Very messy dockerfiles for [Kasm](https://www.kasmweb.com/)
+Source files for my custom [Kasm](https://www.kasmweb.com/) images.
 
-I can almost guarantee there is a better way to do what I have done here but I am but a simple mind
 
 ## Dockerfile
 
-You can build the image from scratch but I will be pushing the images to Docker Hub when possible
+Each (working) application has a single-app and desktop version available for build. The single-app version is the one I push to dockerhub.
 
 Read the Custom Images section from [Kasm's documentation](https://www.kasmweb.com/docs/latest/how_to/building_images.html)
 
