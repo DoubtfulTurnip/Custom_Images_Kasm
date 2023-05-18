@@ -26,7 +26,10 @@ git clone https://github.com/DoubtfulTurnip/Custom_Images_Kasm.git
 sudo docker build -t {application-name}:latest -f Custom_Image_Kasm/{application-name}/dockerfile_custom_{application-name}_{singleapp/desktopapp} .
 ``
 
-Remove the workspace-images folder if no longer required and then configure your new Kasm Workspace with the {application-name}:latest image that you have just built
+Remove the workspace-images folder if no longer required and then configure your new Kasm Workspace with the {application-name}:latest image that you have just built.
+
+For a simpler time just add the Doubtful Turnip registry to your Kasm instance. [Kasm's documentation](https://kasmweb.com/docs/develop/guide/workspace_registry.html)
+
 
 
 ## Docker Hub
