@@ -1,3 +1,4 @@
+There is no singleapp for this Kasm container as a desktop is needed.
 
 - Login: neo4j
 - Password: blood
