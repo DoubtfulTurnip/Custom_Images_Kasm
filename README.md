@@ -28,7 +28,14 @@ sudo docker build -t {application-name}:latest -f Custom_Image_Kasm/{application
 
 Remove the workspace-images folder if no longer required and then configure your new Kasm Workspace with the {application-name}:latest image that you have just built.
 
+
+## Doubful Turnip Kasm Registry
+
 For a simpler time just add the Doubtful Turnip registry to your Kasm instance. [Kasm's documentation](https://kasmweb.com/docs/develop/guide/workspace_registry.html)
+
+Just add the DoubtfulTurnip 3rd party registry to your Kasm instance
+
+https://doubtfulturnip.github.io/doubtful-kasm-registry/
 
 
 
