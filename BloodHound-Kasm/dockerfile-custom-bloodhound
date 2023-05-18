@@ -1,30 +1,19 @@
-ARG BASE_TAG="develop"
-ARG BASE_IMAGE="core-ubuntu-focal"
-FROM kasmweb/$BASE_IMAGE:$BASE_TAG
-
+FROM kasmweb/core-ubuntu-focal:1.13.0
 USER root
 
 ENV HOME /home/kasm-default-profile
 ENV STARTUPDIR /dockerstartup
+ENV INST_SCRIPTS $STARTUPDIR/install
 WORKDIR $HOME
 
 
-### Envrionment config
-ENV DEBIAN_FRONTEND noninteractive
-ENV KASM_RX_HOME $STARTUPDIR/kasmrx
-ENV INST_SCRIPTS $STARTUPDIR/install
+######### Customize Container Here ###########
 
+ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm/
 ARG neo4j=4.4.15
-
 ### Install Tools
-# Install Firefox
-COPY ./src/ubuntu/install/firefox/ $INST_SCRIPTS/firefox/
-COPY ./src/ubuntu/install/firefox/firefox.desktop $HOME/Desktop/
-RUN bash $INST_SCRIPTS/firefox/install_firefox.sh && rm -rf $INST_SCRIPTS/firefox/
 #Install Git
 RUN apt-get install git -y 
-
-################################################################################################################
 
 ##BLOODHOUND
 #Configure neo4j
@@ -32,47 +21,40 @@ RUN wget -nv -O - https://debian.neo4j.com/neotechnology.gpg.key | tee /etc/apt/
     echo 'deb https://debian.neo4j.com stable 4.4' | tee /etc/apt/sources.list.d/neo4j.list &&\
     apt-get update &&\
     apt-get install -y -qq neo4j=1:$neo4j
-
 # BloodHound
 RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip -nv -P /tmp &&\
     unzip /tmp/BloodHound-linux-x64.zip -d /opt/ &&\
     mkdir /data &&\
     chmod +x /opt/BloodHound-linux-x64/BloodHound
-    
 #Configure AzureHound Collector
 RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azurehound-linux-amd64.zip \
     && unzip azurehound-linux-amd64.zip \
     && rm azurehound-linux-amd64.zip \
     && mv azurehound /usr/bin/ \
     && rm -rf azurehound-linux-amd64
-
-
-
-################################################################################################################
-
-##Startup-Script
-ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm/
-COPY $START_SCRIPT/startup.sh /home/kasm-user/startup.sh
+# Add sudo
+RUN apt-get update \
+    && apt-get install -y sudo \
+    && echo 'kasm-user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers \
+    && rm -rf /var/lib/apt/list/*
 # BloodHound Config
-COPY $START_SCRIPT/config.json /root/.config/bloodhound/
-RUN chmod +x /home/kasm-user/startup.sh
+COPY $START_SCRIPT/config.json /home/kasm-user/.config/bloodhound/
 RUN echo '#!/usr/bin/env bash\n\
-    neo4j-admin set-initial-password blood \n\
-    neo4j start\n\
+    sudo neo4j-admin set-initial-password blood \n\
+    sudo neo4j start\n\
     cp -n /opt/BloodHound-linux-x64/resources/app/Collectors/SharpHound.* /home/kasm-user/Desktop/\n\
     wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P /home/kasm-user/.config/bloodhound/\n\ 
-    /home/kasm-user/startup.sh\n\
     sleep 15; /opt/BloodHound-linux-x64/BloodHound --no-sandbox 2>/dev/null\n' > $STARTUPDIR/custom_startup.sh \
     && chmod +x $STARTUPDIR/custom_startup.sh
 
 
-#Permissions
+######### End Customizations ###########
+
+RUN chown 1000:0 $HOME
 RUN $STARTUPDIR/set_user_permission.sh $HOME
-RUN chown 0:0 $HOME
+
 ENV HOME /home/kasm-user
 WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 0:0 $HOME
+RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
-USER 0
-
-CMD ["--tail-log"]
+USER 1000
