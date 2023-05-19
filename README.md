@@ -1,6 +1,6 @@
 # Custom Images for Kasm
 
-Source files for my custom [Kasm](https://www.kasmweb.com/) images.
+Source files for my custom [Kasm](https://www.kasmweb.com/) containers. Feel free to modify and customise. I have also enabled my own 3rd party Kasm Workspace Registry.
 
 
 ## Dockerfile
