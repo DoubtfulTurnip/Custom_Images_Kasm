@@ -1,60 +1,69 @@
-FROM kasmweb/core-ubuntu-focal:1.13.0
+FROM kasmweb/core-ubuntu-focal:1.16.1-rolling-daily
 USER root
 
+# Pre-customization: Use the default profile to support persistent profiles
 ENV HOME /home/kasm-default-profile
 ENV STARTUPDIR /dockerstartup
 ENV INST_SCRIPTS $STARTUPDIR/install
 WORKDIR $HOME
 
-
 ######### Customize Container Here ###########
 
-ENV START_SCRIPT Custom_Images_Kasm/BloodHound-Kasm/
+# Install Git and update package cache
+RUN apt-get update && apt-get install -y git
+
+# Set neo4j version
 ARG neo4j=4.4.15
-### Install Tools
-#Install Git
-RUN apt-get install git -y 
 
-##BLOODHOUND
-#Configure neo4j
-RUN wget -nv -O - https://debian.neo4j.com/neotechnology.gpg.key | tee /etc/apt/trusted.gpg.d/neo4j.asc &&\
-    echo 'deb https://debian.neo4j.com stable 4.4' | tee /etc/apt/sources.list.d/neo4j.list &&\
-    apt-get update &&\
+# Configure neo4j: add repository key and repository, then install neo4j
+RUN wget -nv -O - https://debian.neo4j.com/neotechnology.gpg.key | tee /etc/apt/trusted.gpg.d/neo4j.asc && \
+    echo 'deb https://debian.neo4j.com stable 4.4' | tee /etc/apt/sources.list.d/neo4j.list && \
+    apt-get update && \
     apt-get install -y -qq neo4j=1:$neo4j
-# BloodHound
-RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip -nv -P /tmp &&\
-    unzip /tmp/BloodHound-linux-x64.zip -d /opt/ &&\
-    mkdir /data &&\
-    chmod +x /opt/BloodHound-linux-x64/BloodHound
-#Configure AzureHound Collector
-RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azurehound-linux-amd64.zip \
-    && unzip azurehound-linux-amd64.zip \
-    && rm azurehound-linux-amd64.zip \
-    && mv azurehound /usr/bin/ \
-    && rm -rf azurehound-linux-amd64
-# Add sudo
-RUN apt-get update \
-    && apt-get install -y sudo \
-    && echo 'kasm-user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers \
-    && rm -rf /var/lib/apt/list/*
-# BloodHound Config
-COPY $START_SCRIPT/config.json /home/kasm-user/.config/bloodhound/
-RUN echo '#!/usr/bin/env bash\n\
-    sudo neo4j-admin set-initial-password blood \n\
-    sudo neo4j start\n\
-    cp -n /opt/BloodHound-linux-x64/resources/app/Collectors/SharpHound.* /home/kasm-user/Desktop/\n\
-    wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P /home/kasm-user/.config/bloodhound/\n\ 
-    sleep 15; /opt/BloodHound-linux-x64/BloodHound --no-sandbox 2>/dev/null\n' > $STARTUPDIR/custom_startup.sh \
-    && chmod +x $STARTUPDIR/custom_startup.sh
 
+# Download and install BloodHound
+RUN wget https://github.com/BloodHoundAD/BloodHound/releases/latest/download/BloodHound-linux-x64.zip -nv -P /tmp && \
+    unzip /tmp/BloodHound-linux-x64.zip -d /opt/ && \
+    mkdir /data && \
+    chmod +x /opt/BloodHound-linux-x64/BloodHound
+
+# Configure AzureHound Collector
+RUN wget https://github.com/BloodHoundAD/AzureHound/releases/latest/download/azurehound-linux-amd64.zip && \
+    unzip azurehound-linux-amd64.zip && \
+    rm azurehound-linux-amd64.zip && \
+    mv azurehound /usr/bin/ && \
+    rm -rf azurehound-linux-amd64
+
+# Install sudo and allow passwordless sudo for the default user (kasm-user)
+RUN apt-get update && \
+    apt-get install -y sudo && \
+    echo 'kasm-user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers && \
+    rm -rf /var/lib/apt/lists/*
+
+# Configure BloodHound settings:
+#  - Copy your BloodHound configuration file (ensure the file is in your build context)
+#  - Create a custom startup script that sets neo4j’s initial password, starts neo4j,
+#    copies SharpHound collectors to the Desktop, downloads custom queries, and launches BloodHound.
+COPY Custom_Images_Kasm/BloodHound-Kasm/config.json $HOME/.config/bloodhound/
+
+RUN echo '#!/usr/bin/env bash\n\
+sudo neo4j-admin set-initial-password blood\n\
+sudo neo4j start\n\
+cp -n /opt/BloodHound-linux-x64/resources/app/Collectors/SharpHound.* $HOME/Desktop/\n\
+wget https://raw.githubusercontent.com/CompassSecurity/BloodHoundQueries/master/BloodHound_Custom_Queries/customqueries.json -nv -P $HOME/.config/bloodhound/\n\
+sleep 15; /opt/BloodHound-linux-x64/BloodHound --no-sandbox 2>/dev/null\n' > $STARTUPDIR/custom_startup.sh && \
+    chmod +x $STARTUPDIR/custom_startup.sh
 
 ######### End Customizations ###########
 
+# Post-customization: Set permissions on the default profile
 RUN chown 1000:0 $HOME
 RUN $STARTUPDIR/set_user_permission.sh $HOME
 
+# Switch to the runtime persistent profile
 ENV HOME /home/kasm-user
 WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
+# Run as the default non-root user
 USER 1000
