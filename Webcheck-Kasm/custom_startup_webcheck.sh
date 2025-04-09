@@ -7,10 +7,10 @@
 
 # Start the webcheck development server in the background.
 # Make sure the repository is cloned at /web-check.
-yarn dev --cwd /web-check &
+cd /web-check && yarn dev \
 
 # Wait a few seconds to allow the dev server to initialize.
 sleep 5 && \
 
 # Launch Firefox in kiosk mode to display the webcheck UI.
-firefox --kiosk http://localhost:3000 &
+firefox --kiosk http://localhost:4321 &
