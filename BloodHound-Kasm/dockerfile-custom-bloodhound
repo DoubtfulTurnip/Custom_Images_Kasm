@@ -1,32 +1,13 @@
-FROM kasmweb/ubuntu-focal-desktop:1.16.1
+FROM kasmweb/ubuntu-focal-dind:1.16.1
 
 USER root
 
-# Install required dependencies
-RUN apt-get update && \
-    apt-get install -y \
-        curl wget tar unzip libxss1 libappindicator1 libindicator7 fonts-liberation libnss3 \
-        libxcomposite1 libxcursor1 libxdamage1 libxrandr2 libasound2 libatk1.0-0 libgtk-3-0 \
-        xdg-utils gnupg lsb-release software-properties-common
+# Set Kasm environment variables
+ENV HOME /home/kasm-default-profile
+ENV STARTUPDIR /dockerstartup
+ENV INST_SCRIPTS $STARTUPDIR/install
+WORKDIR $HOME
 
-# Download and install BloodHound CLI
-RUN wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz && \
-    tar -xvzf bloodhound-cli-linux-amd64.tar.gz && \
-    mv bloodhound-cli /usr/local/bin/bloodhound-cli && \
-    chmod +x /usr/local/bin/bloodhound-cli && \
-    rm bloodhound-cli-linux-amd64.tar.gz
+######### Customize Container Here ###########
 
-# Install BloodHound Community Edition via bloodhound-cli
-RUN bloodhound-cli install
-
-# Optional: create desktop shortcut to launch BloodHound
-RUN echo "[Desktop Entry]\n\
-Name=BloodHound\n\
-Exec=/usr/local/bin/bloodhound\n\
-Icon=utilities-terminal\n\
-Type=Application\n\
-Categories=Utility;" > /usr/share/applications/bloodhound.desktop
-
-USER 1000
-
-CMD ["start-kasmvnc"]
+RUN 
