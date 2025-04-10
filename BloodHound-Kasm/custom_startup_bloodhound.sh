@@ -3,6 +3,9 @@
 
 sudo service docker start
 
+# Display a desktop notification to inform the user.
+notify-send -t 60000 "BloodHound is starting" "Please wait while BloodHound services are being deployed."
+
 cd /bloodhound
 
 docker compose up -d
