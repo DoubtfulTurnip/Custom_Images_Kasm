@@ -18,4 +18,6 @@ if [ -n "$BLOODHOUND_PASS" ]; then
     printf "BloodHound Password: %s" "$BLOODHOUND_PASS" > /home/kasm-user/Desktop/BloodHound_Password.txt
 fi
 
+notify-send -t 60000 "BloodHound has started" "The initial password is located on the desktop."
+
 google-chrome --start-maximized http://localhost:8080/ui/login &
