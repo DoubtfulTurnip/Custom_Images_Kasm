@@ -1,4 +1,4 @@
-FROM kasmweb/firefox:1.16.1-rolling-daily
+FROM kasmweb/firefox:1.17.0-rolling-daily
 
 USER root
 

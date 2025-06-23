@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>Secret Scanner</title></head>
+<body>
+  <h1>Scan Website for Leaked Secrets</h1>
+  <form method="post">
+    <input type="text" name="url" placeholder="https://example.com" required style="width: 400px;">
+    <button type="submit">Scan</button>
+  </form>
+  {% if results %}
+    <h2>Results:</h2>
+    <ul>
+      {% for item in results %}
+        <li><pre>{{ item | tojson(indent=2) }}</pre></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</body>
+</html>
+
+
+{% if debug_log %}
+  <h2>Debug Log:</h2>
+  <pre style="background-color: #f4f4f4; padding: 10px; border: 1px solid #ccc; max-height: 300px; overflow-y: auto;">
+    {% for line in debug_log %}
+      {{ line }}
+    {% endfor %}
+  </pre>
+{% endif %}
