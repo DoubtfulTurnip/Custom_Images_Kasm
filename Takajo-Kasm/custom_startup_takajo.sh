@@ -21,6 +21,9 @@ WATCH_DIR="$HOME_DIR/Desktop/Uploads"
 TMP_JSONL="/tmp/timeline.jsonl"
 RULES_PATH="$HOME/rules"
 RULES_CONF="$HOME/rules/config"
+CHAINSAW_RULES="$HOME/chainsaw-rules"
+CHAINSAW_MAPPINGS="$HOME/chainsaw-mappings/sigma-event-logs-all.yml"
+CHAINSAW_SIGMA="$HOME/chainsaw-sigma-rules"
 REPORTS_DIR="/reports"
 STATIC_DIR="$REPORTS_DIR/static"
 HTML_DB="$REPORTS_DIR/html-server.sqlite"
@@ -36,8 +39,8 @@ LOGFILE="$EXT_DIR/custom_startup_$TIMESTAMP.log"
 exec > >(tee -a "$LOGFILE") 2>&1
 echo "$LOG logging to $LOGFILE"
 cd "$HOME_DIR"
-# Initial notification
-notify-send "Takajō" "Watching for .evtx in $WATCH_DIR and subfolders"
+# Initial notification (10s)
+notify-send -t 10000 "Takajō" "Watching for .evtx in $WATCH_DIR and subfolders"
 
 # Wait until uploads settle: resets 15s timer on each new event
 wait_for_uploads() {
@@ -127,15 +130,31 @@ run_all() {
   takajo list-ip-addresses \
     -t "$TMP_JSONL" -o "$EXT_DIR/ipAddresses.txt" --quiet
 
-  # Final notification
-  notify-send "Takajō" "Extended reports available: $EXT_DIR"
+  # Run Chainsaw hunt after all other processing
+  echo "$LOG running Chainsaw hunt"
+  chainsaw hunt "$WATCH_DIR" \
+    --sigma   "$CHAINSAW_SIGMA" \
+    --rule    "$CHAINSAW_RULES" \
+    --mapping "$CHAINSAW_MAPPINGS" \
+    --csv --skip-errors \
+    --output "$EXT_DIR/chainsaw_hunt.csv"
+
+  # Create a zip of all exported files
+  echo "$LOG creating ZIP archive"
+  ZIPFILE="$HOME_DIR/Desktop/Downloads/TakajoReports_$TIMESTAMP.zip"
+  zip -r "$ZIPFILE" "$EXT_DIR"
+  echo "$LOG created zip: $ZIPFILE"
+
+  # Final notifications (10s)
+  notify-send -t 10000 "Takajō" "Extended reports available: $EXT_DIR"
+  notify-send -t 10000 "Takajō" "Zipped archive created: $ZIPFILE"
 }
 
 # Wait for first .evtx event then run once
 inotifywait -m -r -e create -e moved_to -e close_write --format '%w%f' "$WATCH_DIR" \
 | while read -r file; do
     if [[ "${file,,}" == *.evtx ]]; then
-      notify-send "Takajō" "Detected EVTX: $file, starting analysis"
+      notify-send -t 10000 "Takajō" "Detected EVTX: $file, starting analysis"
       run_all
       break
     fi

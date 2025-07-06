@@ -93,7 +93,23 @@ RUN curl -L \
     chmod +x /usr/local/bin/takajo && \
     rm -rf /tmp/takajo.zip
 
-# 5) Prepare reports directory
+RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.12.2/chainsaw_all_platforms+rules.zip" \
+         -o /tmp/chainsaw_all_platforms+rules.zip && \
+    unzip /tmp/chainsaw_all_platforms+rules.zip -d /tmp && \
+    rm /tmp/chainsaw_all_platforms+rules.zip && \
+    mv /tmp/chainsaw /opt/Chainsaw && \
+    mv /opt/Chainsaw/chainsaw_x86_64-unknown-linux-gnu /usr/local/bin/chainsaw && \
+    chmod +x /usr/local/bin/chainsaw && \
+    ln -s /opt/Chainsaw/sigma    "$HOME/chainsaw-sigma-rules" && \
+    ln -s /opt/Chainsaw/mappings "$HOME/chainsaw-mappings"    && \
+    ln -s /opt/Chainsaw/rules    "$HOME/chainsaw-rules"
+  
+
+
+
+
+
+    # 5) Prepare reports directory
 RUN mkdir -p /reports
 
 # 6) Copy custom startup script
