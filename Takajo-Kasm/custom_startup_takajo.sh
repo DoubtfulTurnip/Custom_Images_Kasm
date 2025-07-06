@@ -42,15 +42,15 @@ cd "$HOME_DIR"
 # Initial notification (10s)
 notify-send -t 10000 "Takajō" "Watching for .evtx in $WATCH_DIR and subfolders"
 
-# Wait until uploads settle: resets 15s timer on each new event
+# Wait until uploads settle: resets 30s timer on each new event
 wait_for_uploads() {
-  echo "$LOG waiting for uploads to finish (15s inactivity)"
+  echo "$LOG waiting for uploads to finish (30s inactivity)"
   while true; do
-    if file=$(inotifywait -r -e create -e moved_to -e close_write --format '%w%f' -t 15 "$WATCH_DIR" 2>/dev/null); then
+    if file=$(inotifywait -r -e create -e moved_to -e close_write --format '%w%f' -t 30 "$WATCH_DIR" 2>/dev/null); then
       echo "$LOG detected new file: $file, resetting timer"
       continue
     else
-      echo "$LOG no new uploads in 15s, proceeding"
+      echo "$LOG no new uploads in 30s, proceeding"
       break
     fi
   done
@@ -103,41 +103,29 @@ run_all() {
     takajo "$cmd" -t "$TMP_JSONL" -o "$EXT_DIR/${cmd}.csv" --quiet
   done
 
-  # Timeline CSV commands with logon options as flags
-  takajo timeline-logon \
-    -t "$TMP_JSONL" \
-    -o "$EXT_DIR/timeline-logon.csv" \
-    -c -l -a \
-    --quiet
-  takajo timeline-partition-diagnostic \
-    -t "$TMP_JSONL" -o "$EXT_DIR/timeline-partition-diagnostic.csv" --quiet
-  takajo timeline-suspicious-processes \
-    -t "$TMP_JSONL" -o "$EXT_DIR/timeline-suspicious-processes.csv" --quiet
-  takajo timeline-tasks \
-    -t "$TMP_JSONL" -o "$EXT_DIR/timeline-tasks.csv" --quiet
+  # Timeline CSV commands
+  takajo timeline-logon -t "$TMP_JSONL" -o "$EXT_DIR/timeline-logon.csv" -c -l -a --quiet
+  takajo timeline-partition-diagnostic -t "$TMP_JSONL" -o "$EXT_DIR/timeline-partition-diagnostic.csv" --quiet
+  takajo timeline-suspicious-processes -t "$TMP_JSONL" -o "$EXT_DIR/timeline-suspicious-processes.csv" --quiet
+  takajo timeline-tasks -t "$TMP_JSONL" -o "$EXT_DIR/timeline-tasks.csv" --quiet
 
   # TTP commands
-  takajo ttp-summary \
-    -t "$TMP_JSONL" -o "$EXT_DIR/ttp-summary.csv" --quiet
-  takajo ttp-visualize \
-    -t "$TMP_JSONL" -o "$EXT_DIR/ttp-visualize.json" --quiet
+  takajo ttp-summary -t "$TMP_JSONL" -o "$EXT_DIR/ttp-summary.csv" --quiet
+  takajo ttp-visualize -t "$TMP_JSONL" -o "$EXT_DIR/ttp-visualize.json" --quiet
 
   # List outputs
-  takajo list-domains \
-    -t "$TMP_JSONL" -o "$EXT_DIR/domains.txt" --quiet
-  takajo list-hashes \
-    -t "$TMP_JSONL" -o "$EXT_DIR/hashes" --quiet
-  takajo list-ip-addresses \
-    -t "$TMP_JSONL" -o "$EXT_DIR/ipAddresses.txt" --quiet
+  takajo list-domains -t "$TMP_JSONL" -o "$EXT_DIR/domains.txt" --quiet
+  takajo list-hashes -t "$TMP_JSONL" -o "$EXT_DIR/hashes" --quiet
+  takajo list-ip-addresses -t "$TMP_JSONL" -o "$EXT_DIR/ipAddresses.txt" --quiet
 
-  # Run Chainsaw hunt after all other processing
+  # Run Chainsaw hunt after all processing
   echo "$LOG running Chainsaw hunt"
   chainsaw hunt "$WATCH_DIR" \
     --sigma   "$CHAINSAW_SIGMA" \
     --rule    "$CHAINSAW_RULES" \
     --mapping "$CHAINSAW_MAPPINGS" \
     --csv --skip-errors \
-    --output "$EXT_DIR/chainsaw_hunt.csv"
+    --output "$EXT_DIR/chainsaw_hunt"
 
   # Create a zip of all exported files
   echo "$LOG creating ZIP archive"
@@ -150,12 +138,30 @@ run_all() {
   notify-send -t 10000 "Takajō" "Zipped archive created: $ZIPFILE"
 }
 
-# Wait for first .evtx event then run once
-inotifywait -m -r -e create -e moved_to -e close_write --format '%w%f' "$WATCH_DIR" \
-| while read -r file; do
-    if [[ "${file,,}" == *.evtx ]]; then
-      notify-send -t 10000 "Takajō" "Detected EVTX: $file, starting analysis"
-      run_all
-      break
+# -----------------------------
+# Debounced EVTX watcher & runner
+# -----------------------------
+debounce_pid=""
+
+inotifywait -m -r \
+  -e close_write,moved_to \
+  --format '%w%f' \
+  --exclude '.*\.uploading$' \
+  "$WATCH_DIR" \
+| while read -r evfile; do
+    if [[ "$evfile" == *.evtx ]]; then
+      echo "$LOG detected EVTX: $evfile, resetting debounce timer"
+
+      # cancel any existing pending run
+      [[ -n $debounce_pid ]] && kill "$debounce_pid" 2>/dev/null || true
+
+      # start a new 30s timer: if it completes, call run_all
+      (
+        sleep 30 && \
+        echo "$LOG no new EVTX in 30s; starting analysis" && \
+        notify-send -t 10000 "Takajō" "No new EVTX in 30s, beginning analysis" && \
+        run_all
+      ) &
+      debounce_pid=$!
     fi
   done
