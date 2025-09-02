@@ -53,8 +53,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy built contexts
 COPY --from=backend /app /epagneul-backend
 COPY --from=frontend /app /epagneul-frontend
-# Copy upload utility
-COPY --from=source /src/epagneul/upload.py /epagneul/upload.py
 
 # Preload docker images inside DinD
 RUN docker build -t epagneul-backend /epagneul-backend && \
