@@ -8,22 +8,24 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 # =========================
 # Stage 2 - Backend build
 # =========================
-FROM docker:25.0.5-cli AS backend
+FROM python:3.8-slim AS backend
 WORKDIR /app
 
-# Install Python build deps (for lxml, evtx, scipy)
-RUN apk add --no-cache python3 py3-pip gcc g++ make libffi-dev openssl-dev \
-    musl-dev libxml2-dev libxslt-dev zlib-dev rust cargo bash
+# Build deps (for lxml, evtx, scipy)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ make libffi-dev libssl-dev python3-dev \
+    libxml2-dev libxslt1-dev zlib1g-dev rustc cargo && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy backend source
 COPY --from=source /src/epagneul/backend /app
 
-# Patch setup.py and install backend
+# Patch invalid python_requires and install
 RUN sed -i 's/>=3\.8\.\*/>=3.8/' setup.py && \
     pip install --upgrade pip && \
     pip install --no-cache-dir .
 
-# Build a minimal runtime Docker image for backend
+# Build backend image tarball
 RUN echo 'FROM python:3.8-slim\n\
 WORKDIR /app\n\
 COPY . /app\n\
@@ -32,17 +34,17 @@ CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]' 
     docker build -t epagneul-backend:latest . && \
     mkdir -p /out && docker save epagneul-backend:latest -o /out/epagneul-backend.tar
 
-
 # =========================
 # Stage 3 - Frontend build
 # =========================
-FROM docker:25.0.5-cli AS frontend
+FROM node:18 AS frontend
 WORKDIR /app
-
-# Copy frontend source
 COPY --from=source /src/epagneul/frontend /app
 
-# Build runtime Docker image for frontend
+# Install dependencies (no build step needed, repo runs with serve)
+RUN npm install
+
+# Build frontend image tarball
 RUN echo 'FROM node:18\n\
 WORKDIR /app\n\
 COPY . /app\n\
@@ -72,11 +74,9 @@ RUN mkdir -p /opt/epagneul-images
 COPY --from=backend /out/epagneul-backend.tar /opt/epagneul-images/epagneul-backend.tar
 COPY --from=frontend /out/epagneul-frontend.tar /opt/epagneul-images/epagneul-frontend.tar
 
-# Provide docker-compose file (uses prebuilt images)
+# Provide docker-compose file (uses prebuilt images only)
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml << 'EOF'
-version: "3.8"
-
 services:
   backend:
     image: epagneul-backend:latest
@@ -122,11 +122,11 @@ networks:
     driver: bridge
 EOF
 
-# Copy optimized startup script
+# Copy startup script
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
-# Fix permissions
+# Permissions
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME && \
     $STARTUPDIR/set_user_permission.sh $HOME
 
