@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libnotify-bin \
     python3 \
     python3-pip \
+    python3-venv \
+    python3-full \
     netcat-openbsd \
     git \
     # Backend build dependencies  
@@ -38,15 +40,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /tmp/build
 RUN git clone --depth=1 https://github.com/jurelou/epagneul.git epagneul-source
 
-# Build backend application
+# Build backend application using virtual environment
 WORKDIR /tmp/build/epagneul-source/backend
 RUN echo "Building Epagneul backend..." && \
+    # Create virtual environment
+    python3 -m venv /opt/epagneul-venv && \
+    # Activate virtual environment and install
+    /opt/epagneul-venv/bin/python -m pip install --upgrade pip && \
     # Fix Python version requirement
     sed -i "s/>=3\.8\.\*/>=3.8/" setup.py && \
-    # Upgrade pip to compatible version
-    pip3 install --upgrade "pip<24.1" && \
-    # Install the backend application
-    pip3 install --no-cache-dir . && \
+    # Install the backend application in virtual environment
+    /opt/epagneul-venv/bin/pip install --no-cache-dir . && \
     echo "Backend build completed"
 
 # Build frontend application  
@@ -63,6 +67,8 @@ RUN echo "Setting up runtime environment..." && \
     mkdir -p /opt/epagneul && \
     # Copy built applications to runtime location
     cp -r /tmp/build/epagneul-source/* /opt/epagneul/ && \
+    # Make virtual environment accessible
+    ln -s /opt/epagneul-venv /opt/epagneul/venv && \
     # Clean up build artifacts
     rm -rf /tmp/build && \
     echo "Runtime setup completed"
@@ -78,14 +84,12 @@ services:
       - "8000:8000"
     volumes:
       - /opt/epagneul/backend:/app
+      - /opt/epagneul-venv:/venv
     working_dir: /app
     command: >
       bash -c "
-        apt-get update && apt-get install -y --no-install-recommends gcc g++ make libffi-dev libssl-dev python3-dev libxml2-dev libxslt1-dev zlib1g-dev rustc cargo curl &&
-        sed -i 's/>=3\.8\.\*/>=3.8/' setup.py &&
-        pip install --upgrade 'pip<24.1' &&
-        pip install --no-cache-dir . &&
-        uvicorn epagneul.api.app:app --host 0.0.0.0 --port 8000
+        apt-get update && apt-get install -y --no-install-recommends curl &&
+        /venv/bin/uvicorn epagneul.api.app:app --host 0.0.0.0 --port 8000
       "
     depends_on:
       - neo4j
@@ -97,7 +101,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 120s
+      start_period: 60s
 
   frontend:
     image: node:18-slim
