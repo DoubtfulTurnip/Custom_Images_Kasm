@@ -10,9 +10,11 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 # =========================
 FROM python:3.11-slim AS backend
 WORKDIR /app
-COPY --from=source /src/epagneul/backend /app
 
-# Install build deps for Python packages
+# Copy project manifest for deps
+COPY --from=source /src/epagneul/pyproject.toml /src/epagneul/poetry.lock* /app/
+
+# Install build deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ make libffi-dev libssl-dev python3-dev curl && \
     rm -rf /var/lib/apt/lists/*
@@ -20,11 +22,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install poetry
 RUN pip install --no-cache-dir poetry
 
-# Install backend dependencies with Poetry (no venv)
+# Install deps (no venv)
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi
 
-CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Copy backend source code
+COPY --from=source /src/epagneul/backend /app/backend
+
+# Note: FastAPI app lives under backend/
+CMD ["uvicorn", "backend.epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # =========================
 # Stage 3 - Frontend build
@@ -92,7 +98,7 @@ services:
       - neo4j
     networks:
       - backend
-    command: ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "backend.epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
   frontend:
     image: epagneul-frontend
