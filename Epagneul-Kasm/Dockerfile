@@ -21,9 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=source /src/epagneul/backend /app
 RUN pip install --no-cache-dir .
 
-# Save built backend image to tar
+# Package backend into a tarball for fast load
 RUN mkdir -p /out && \
-    tar -cf /out/backend.tar -C / .  
+    tar -cf /out/epagneul-backend.tar -C /app .
 
 # =========================
 # Stage 3 - Frontend build
@@ -31,11 +31,13 @@ RUN mkdir -p /out && \
 FROM node:18 AS frontend
 WORKDIR /app
 COPY --from=source /src/epagneul/frontend /app
+
+# Install + build Vue frontend
 RUN npm ci && npm run build
 
-# Save built frontend image to tar
+# Package frontend into a tarball for fast load
 RUN mkdir -p /out && \
-    tar -cf /out/frontend.tar -C / .  
+    tar -cf /out/epagneul-frontend.tar -C /app .
 
 # =========================
 # Stage 4 - Final Kasm image
@@ -53,12 +55,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl jq libnotify-bin python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy prebuilt image tarballs
+# Copy prebuilt backend + frontend image tarballs
 RUN mkdir -p /opt/epagneul-images
-COPY --from=backend /out/backend.tar /opt/epagneul-images/backend.tar
-COPY --from=frontend /out/frontend.tar /opt/epagneul-images/frontend.tar
+COPY --from=backend /out/epagneul-backend.tar /opt/epagneul-images/epagneul-backend.tar
+COPY --from=frontend /out/epagneul-frontend.tar /opt/epagneul-images/epagneul-frontend.tar
 
-# Provide docker-compose file (use images, not build)
+# Provide docker-compose file (only uses prebuilt images)
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml << 'EOF'
 version: "3.8"
@@ -108,7 +110,7 @@ networks:
     driver: bridge
 EOF
 
-# Copy startup script
+# Copy optimized startup script
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
