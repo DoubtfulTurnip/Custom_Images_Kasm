@@ -44,7 +44,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=1.17.0
-            type=raw,value=latest
           labels: |
             org.opencontainers.image.title=Epagnuel Kasm Workspace
             org.opencontainers.image.description=Windows Event Log Visualization workspace for Kasm
@@ -80,4 +79,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Usage:** Update your Kasm workspace to use this image" >> $GITHUB_STEP_SUMMARY
+          echo "**Kasm Version:** 1.17.x compatible" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Usage:** Update your Kasm workspace registry to use this image" >> $GITHUB_STEP_SUMMARY
