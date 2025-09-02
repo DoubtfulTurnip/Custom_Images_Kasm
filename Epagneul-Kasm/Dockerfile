@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=source /src/epagneul/backend /app
 RUN pip install --no-cache-dir .
 
-# Package backend into a tarball for fast load
+# Package backend into tarball
 RUN mkdir -p /out && \
     tar -cf /out/epagneul-backend.tar -C /app .
 
@@ -32,10 +32,10 @@ FROM node:18 AS frontend
 WORKDIR /app
 COPY --from=source /src/epagneul/frontend /app
 
-# Install dependencies (use ci if lockfile exists, fallback to install)
+# Install deps (ci if lockfile exists, fallback to install)
 RUN npm ci || npm install
 
-# Package the raw frontend app (with deps) into tarball
+# Package frontend into tarball
 RUN mkdir -p /out && \
     tar -cf /out/epagneul-frontend.tar -C /app .
 
@@ -55,16 +55,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl jq libnotify-bin python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy prebuilt backend + frontend tarballs
+# Copy prebuilt tars
 RUN mkdir -p /opt/epagneul-images
 COPY --from=backend /out/epagneul-backend.tar /opt/epagneul-images/epagneul-backend.tar
 COPY --from=frontend /out/epagneul-frontend.tar /opt/epagneul-images/epagneul-frontend.tar
 
-# Provide docker-compose file (only uses prebuilt images)
+# Provide docker-compose (uses prebuilt images)
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml << 'EOF'
-version: "3.8"
-
 services:
   backend:
     image: epagneul-backend:latest
@@ -111,7 +109,7 @@ networks:
     driver: bridge
 EOF
 
-# Copy optimized startup script
+# Copy startup script
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
