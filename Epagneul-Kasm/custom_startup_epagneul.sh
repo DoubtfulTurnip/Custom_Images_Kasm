@@ -327,7 +327,24 @@ finalize_setup() {
     
     # Launch browser
     sleep 3
-    google-chrome --start-maximized --no-first-run "$WEB_UI_URL" >/dev/null 2>&1 &
+    log "INFO" "Launching browser for Epagneul web interface"
+    
+    # Launch Chrome with appropriate flags for Kasm environment
+    google-chrome \
+        --start-maximized \
+        --no-first-run \
+        --no-default-browser-check \
+        --disable-extensions \
+        --disable-plugins-discovery \
+        --no-sandbox \
+        --disable-dev-shm-usage \
+        "$WEB_UI_URL" >/dev/null 2>&1 &
+    
+    # Alternative browsers as fallback
+    if ! pgrep -f "google-chrome" > /dev/null 2>&1; then
+        log "WARN" "Chrome launch may have failed, trying chromium"
+        chromium-browser --start-maximized --no-first-run "$WEB_UI_URL" >/dev/null 2>&1 &
+    fi
     
     # Success notification
     notify-send -t 15000 "🔍 Epagneul Ready!" \
