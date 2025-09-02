@@ -9,41 +9,78 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 # Stage 2 - Backend image build
 # =========================
 FROM docker:24-dind AS backend-builder
+
+# Enable Docker daemon to run in background
+ENV DOCKER_TLS_CERTDIR=""
+ENV DOCKER_HOST=unix:///var/run/docker.sock
+
 WORKDIR /build
 
-# Start Docker daemon in background
-RUN dockerd-entrypoint.sh &
-RUN sleep 10
+# Start Docker daemon with proper configuration
+RUN dockerd \
+    --host=unix:///var/run/docker.sock \
+    --host=tcp://0.0.0.0:2376 \
+    --storage-driver=vfs \
+    --iptables=false \
+    --pidfile=/var/run/docker.pid \
+    --exec-root=/var/run/docker \
+    --data-root=/var/lib/docker \
+    --debug & \
+    sleep 15 && \
+    docker info
 
 # Copy source and backend Dockerfile
 COPY --from=source /src/epagneul/backend /build/backend
 COPY backend/Dockerfile /build/backend/Dockerfile
 
-# Build backend image
-RUN cd /build/backend && \
+# Build backend image with Docker daemon running
+RUN dockerd \
+    --host=unix:///var/run/docker.sock \
+    --host=tcp://0.0.0.0:2376 \
+    --storage-driver=vfs \
+    --iptables=false \
+    --pidfile=/var/run/docker.pid \
+    --exec-root=/var/run/docker \
+    --data-root=/var/lib/docker \
+    --debug & \
+    sleep 15 && \
+    cd /build/backend && \
     docker build -t bukshee/epagneul-backend:latest . && \
     mkdir -p /out && \
-    docker save bukshee/epagneul-backend:latest -o /out/epagneul-backend.tar
+    docker save bukshee/epagneul-backend:latest -o /out/epagneul-backend.tar && \
+    pkill dockerd || true
 
 # =========================
 # Stage 3 - Frontend image build
 # =========================
 FROM docker:24-dind AS frontend-builder
-WORKDIR /build
 
-# Start Docker daemon in background
-RUN dockerd-entrypoint.sh &
-RUN sleep 10
+# Enable Docker daemon to run in background
+ENV DOCKER_TLS_CERTDIR=""
+ENV DOCKER_HOST=unix:///var/run/docker.sock
+
+WORKDIR /build
 
 # Copy source and frontend Dockerfile
 COPY --from=source /src/epagneul/frontend /build/frontend
 COPY frontend/Dockerfile /build/frontend/Dockerfile
 
-# Build frontend image
-RUN cd /build/frontend && \
+# Build frontend image with Docker daemon running
+RUN dockerd \
+    --host=unix:///var/run/docker.sock \
+    --host=tcp://0.0.0.0:2376 \
+    --storage-driver=vfs \
+    --iptables=false \
+    --pidfile=/var/run/docker.pid \
+    --exec-root=/var/run/docker \
+    --data-root=/var/lib/docker \
+    --debug & \
+    sleep 15 && \
+    cd /build/frontend && \
     docker build -t bukshee/epagneul-frontend:latest . && \
     mkdir -p /out && \
-    docker save bukshee/epagneul-frontend:latest -o /out/epagneul-frontend.tar
+    docker save bukshee/epagneul-frontend:latest -o /out/epagneul-frontend.tar && \
+    pkill dockerd || true
 
 # =========================
 # Stage 4 - Final Kasm image
@@ -149,9 +186,18 @@ networks:
     driver: bridge
 EOF
 
-# Pre-pull Neo4j image during build
-RUN dockerd-entrypoint.sh & \
-    sleep 10 && \
+# Pre-pull Neo4j image during build (with proper Docker daemon setup)
+RUN export DOCKER_TLS_CERTDIR="" && \
+    dockerd \
+        --host=unix:///var/run/docker.sock \
+        --host=tcp://0.0.0.0:2376 \
+        --storage-driver=vfs \
+        --iptables=false \
+        --pidfile=/var/run/docker.pid \
+        --exec-root=/var/run/docker \
+        --data-root=/var/lib/docker \
+        --debug & \
+    sleep 15 && \
     docker pull neo4j:4.4.2 && \
     docker save neo4j:4.4.2 -o /opt/epagneul-images/neo4j.tar && \
     pkill dockerd || true && \
