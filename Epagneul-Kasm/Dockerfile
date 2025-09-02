@@ -45,7 +45,6 @@ CMD ["npm", "run", "serve"]
 FROM kasmweb/ubuntu-noble-dind:1.17.0
 USER root
 
-# Kasm environment
 ENV HOME=/home/kasm-user \
     STARTUPDIR=/dockerstartup \
     INST_SCRIPTS=$STARTUPDIR/install
@@ -56,16 +55,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl jq libnotify-bin python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy built contexts
+# Copy prebuilt backend + frontend from earlier stages
 COPY --from=backend /app /epagneul-backend
 COPY --from=frontend /app /epagneul-frontend
 
-# Preload docker images inside DinD
-RUN docker build -t epagneul-backend /epagneul-backend && \
-    docker build -t epagneul-frontend /epagneul-frontend && \
-    docker pull neo4j:4.4.2
-
-# Compose file using prebuilt images
+# Provide docker-compose file (no "build:", only images/volumes/networks)
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml << 'EOF'
 version: '3.8'
@@ -79,15 +73,13 @@ services:
       - 7687:7687
     environment:
       - NEO4J_AUTH=neo4j/password
-      - NEO4J_dbms_security_procedures_unrestricted=algo.*,gds.*,apoc.*
-      - NEO4J_apoc_import_file_enabled=true
     volumes:
       - neo4j_data:/data
     networks:
       - backend
 
   backend:
-    image: epagneul-backend
+    build: /epagneul-backend
     container_name: backend
     restart: unless-stopped
     ports:
@@ -96,10 +88,9 @@ services:
       - neo4j
     networks:
       - backend
-    command: ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
   frontend:
-    image: epagneul-frontend
+    build: /epagneul-frontend
     container_name: frontend
     restart: unless-stopped
     ports:
@@ -126,3 +117,4 @@ RUN mkdir -p $HOME && chown -R 1000:0 $HOME && \
 
 USER 1000
 WORKDIR $HOME
+
