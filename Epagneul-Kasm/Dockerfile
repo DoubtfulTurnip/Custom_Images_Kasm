@@ -4,7 +4,7 @@
 FROM alpine/git AS source
 WORKDIR /src
 RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
-
+  
 # =========================
 # Stage 2 - Backend image build
 # =========================
