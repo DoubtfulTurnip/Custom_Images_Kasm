@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin
 
     
 # Copy the custom startup script into the container.
-COPY custom_startup_epagnuel.sh $STARTUPDIR/custom_startup.sh
+COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
 ######### End Customizations ###########
