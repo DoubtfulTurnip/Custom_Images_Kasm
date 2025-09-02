@@ -1,59 +1,55 @@
-FROM kasmweb/ubuntu-noble-dind:1.17.0 AS base
-USER root
-ENV STARTUPDIR=/dockerstartup \
-    INST_SCRIPTS=$STARTUPDIR/install
-
-# Install build deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl jq libnotify-bin python3 python3-pip git && \
-    rm -rf /var/lib/apt/lists/*
-
-# Clone repo once
+# =========================
+# Stage 1 - Source fetch
+# =========================
+FROM alpine/git AS source
 WORKDIR /src
 RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 
-# ------------------------
-# Backend image
-# ------------------------
+# =========================
+# Stage 2 - Backend build
+# =========================
 FROM python:3.11-slim AS backend
 WORKDIR /app
-COPY --from=base /src/backend /app
+COPY --from=source /src/epagneul/backend /app
 RUN pip install --no-cache-dir -r requirements.txt
 CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
-# ------------------------
-# Frontend image
-# ------------------------
+# =========================
+# Stage 3 - Frontend build
+# =========================
 FROM node:18 AS frontend
 WORKDIR /app
-COPY --from=base /src/frontend /app
+COPY --from=source /src/epagneul/frontend /app
 RUN npm install && npm run build
 CMD ["npm", "run", "serve"]
 
-# ------------------------
-# Final Kasm image
-# ------------------------
+# =========================
+# Stage 4 - Final Kasm image
+# =========================
 FROM kasmweb/ubuntu-noble-dind:1.17.0
 USER root
 
+# Kasm environment
 ENV HOME=/home/kasm-user \
-    STARTUPDIR=/dockerstartup
+    STARTUPDIR=/dockerstartup \
+    INST_SCRIPTS=$STARTUPDIR/install
 WORKDIR $HOME
 
+# Runtime deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libnotify-bin && \
+    curl jq libnotify-bin python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy in build contexts
+# Copy built contexts
 COPY --from=backend /app /epagneul-backend
 COPY --from=frontend /app /epagneul-frontend
 
-# Build & preload docker images inside DinD
+# Preload docker images inside DinD
 RUN docker build -t epagneul-backend /epagneul-backend && \
     docker build -t epagneul-frontend /epagneul-frontend && \
     docker pull neo4j:4.4.2
 
-# Compose file referencing prebuilt images
+# Compose file using prebuilt images
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml << 'EOF'
 version: '3.8'
@@ -84,6 +80,7 @@ services:
       - neo4j
     networks:
       - backend
+    command: ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
   frontend:
     image: epagneul-frontend
@@ -107,7 +104,7 @@ EOF
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
-# Fix permissions
+# Permissions
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME && \
     $STARTUPDIR/set_user_permission.sh $HOME
 
