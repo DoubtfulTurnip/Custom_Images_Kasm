@@ -6,7 +6,7 @@ ENV HOME=/home/kasm-user \
     INST_SCRIPTS=$STARTUPDIR/install
 WORKDIR $HOME
 
-# Install all required dependencies in one layer
+# Install all required dependencies including python3-full
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Runtime dependencies
     curl \
@@ -40,26 +40,49 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /tmp/build
 RUN git clone --depth=1 https://github.com/jurelou/epagneul.git epagneul-source
 
-# Build backend application using virtual environment
+# Build backend application with comprehensive Python version fixes
 WORKDIR /tmp/build/epagneul-source/backend
 RUN echo "Building Epagneul backend..." && \
+    echo "Current Python version: $(python3 --version)" && \
     # Create virtual environment
     python3 -m venv /opt/epagneul-venv && \
-    # Activate virtual environment and install
+    # Activate virtual environment and upgrade pip
     /opt/epagneul-venv/bin/python -m pip install --upgrade pip && \
-    # Fix Python version requirement
-    sed -i "s/>=3\.8\.\*/>=3.8/" setup.py && \
-    # Install the backend application in virtual environment
+    # Show original version constraints
+    echo "=== Original Python requirements ===" && \
+    grep -r "python" setup.py pyproject.toml setup.cfg 2>/dev/null || echo "No explicit python requirements found" && \
+    # Comprehensive fix for Python version requirements
+    echo "=== Fixing Python version constraints ===" && \
+    # Fix setup.py
+    if [ -f setup.py ]; then \
+        sed -i 's/python_requires.*=.*"[^"]*"/python_requires=">=3.8"/' setup.py && \
+        sed -i "s/python_requires.*=.*'[^']*'/python_requires='>=3.8'/" setup.py && \
+        sed -i 's/>=3\.8\.\*/>=3.8/' setup.py && \
+        sed -i 's/<3\.9,>=3\.8/>=3.8/' setup.py; \
+    fi && \
+    # Fix pyproject.toml if it exists
+    if [ -f pyproject.toml ]; then \
+        sed -i 's/python.*=.*"<3\.9,>=3\.8"/python = ">=3.8"/' pyproject.toml && \
+        sed -i 's/python.*=.*">=3\.8\.\*"/python = ">=3.8"/' pyproject.toml && \
+        sed -i 's/requires-python.*=.*"<3\.9,>=3\.8"/requires-python = ">=3.8"/' pyproject.toml; \
+    fi && \
+    # Fix setup.cfg if it exists
+    if [ -f setup.cfg ]; then \
+        sed -i 's/python_requires.*=.*/python_requires = >=3.8/' setup.cfg; \
+    fi && \
+    # Show fixed version constraints
+    echo "=== Fixed Python requirements ===" && \
+    grep -r "python" setup.py pyproject.toml setup.cfg 2>/dev/null || echo "No python requirements found after fix" && \
+    # Install the backend application
+    echo "=== Installing backend application ===" && \
     /opt/epagneul-venv/bin/pip install --no-cache-dir . && \
-    echo "Backend build completed"
+    echo "Backend build completed successfully"
 
 # Build frontend application  
 WORKDIR /tmp/build/epagneul-source/frontend
 RUN echo "Building Epagneul frontend..." && \
     # Install dependencies
     npm ci || npm install && \
-    # Build the frontend (if there's a build script)
-    npm run build 2>/dev/null || echo "No build script found, using source directly" && \
     echo "Frontend build completed"
 
 # Create optimized runtime structure
@@ -84,12 +107,15 @@ services:
       - "8000:8000"
     volumes:
       - /opt/epagneul/backend:/app
-      - /opt/epagneul-venv:/venv
+      - /opt/epagneul-venv:/opt/epagneul-venv
     working_dir: /app
     command: >
       bash -c "
         apt-get update && apt-get install -y --no-install-recommends curl &&
-        /venv/bin/uvicorn epagneul.api.app:app --host 0.0.0.0 --port 8000
+        echo 'Using pre-built virtual environment' &&
+        /opt/epagneul-venv/bin/python --version &&
+        /opt/epagneul-venv/bin/python -c 'import epagneul.api.app; print(\"Backend module imported successfully\")' &&
+        /opt/epagneul-venv/bin/uvicorn epagneul.api.app:app --host 0.0.0.0 --port 8000
       "
     depends_on:
       - neo4j
@@ -114,7 +140,8 @@ services:
     command: >
       bash -c "
         apt-get update && apt-get install -y --no-install-recommends curl &&
-        npm ci || npm install &&
+        echo 'Using pre-installed node modules' &&
+        ls -la node_modules/ | head -5 &&
         npm run serve -- --host 0.0.0.0 --port 8080
       "
     depends_on:
@@ -154,7 +181,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 120s
+      start_period: 60s
 
 volumes:
   neo4j_data:
@@ -177,7 +204,6 @@ RUN chmod +x $STARTUPDIR/custom_startup.sh
 # Create health check script
 RUN cat > /usr/local/bin/epagneul-health-check <<'EOF'
 #!/bin/bash
-# Health check for Epagneul services
 web_ui=$(curl -sf http://localhost:8080 >/dev/null 2>&1 && echo "OK" || echo "DOWN")
 backend=$(curl -sf http://localhost:8000 >/dev/null 2>&1 && echo "OK" || echo "DOWN")  
 neo4j=$(curl -sf http://localhost:7474 >/dev/null 2>&1 && echo "OK" || echo "DOWN")
@@ -201,7 +227,7 @@ HEALTHCHECK --interval=30s --timeout=15s --start-period=180s --retries=3 \
     CMD /usr/local/bin/epagneul-health-check
 
 # Fix permissions for all created directories and files
-RUN chown -R 1000:0 /epagneul /opt/epagneul && \
+RUN chown -R 1000:0 /epagneul /opt/epagneul /opt/epagneul-venv && \
     mkdir -p $HOME && chown -R 1000:0 $HOME && \
     $STARTUPDIR/set_user_permission.sh $HOME
 
