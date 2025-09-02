@@ -1,6 +1,5 @@
 #!/bin/bash
 # Enhanced Epagneul startup script for Kasm (optimized for pre-built images)
-
 set -euo pipefail
 
 # Configuration
