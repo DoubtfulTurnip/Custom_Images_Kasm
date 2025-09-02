@@ -1,5 +1,5 @@
 # =========================
-# Stage 1 - Source fetch
+# Stage 1 - Fetch source
 # =========================
 FROM alpine/git AS source
 WORKDIR /src
@@ -11,24 +11,19 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 FROM python:3.8-slim AS backend
 WORKDIR /app
 
-# Install build deps for lxml + evtx (Rust) + scipy
+# Build deps (for lxml, evtx, scipy)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ make libffi-dev libssl-dev python3-dev \
     libxml2-dev libxslt1-dev zlib1g-dev curl \
     rustc cargo && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy backend source
 COPY --from=source /src/epagneul/backend /app
-
-# Install backend via setup.py
 RUN pip install --no-cache-dir .
 
-CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
-
-
-
-
+# Save built backend image to tar
+RUN mkdir -p /out && \
+    tar -cf /out/backend.tar -C / .  
 
 # =========================
 # Stage 3 - Frontend build
@@ -36,8 +31,11 @@ CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 FROM node:18 AS frontend
 WORKDIR /app
 COPY --from=source /src/epagneul/frontend /app
-RUN npm install
-CMD ["npm", "run", "serve"]
+RUN npm ci && npm run build
+
+# Save built frontend image to tar
+RUN mkdir -p /out && \
+    tar -cf /out/frontend.tar -C / .  
 
 # =========================
 # Stage 4 - Final Kasm image
@@ -55,18 +53,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl jq libnotify-bin python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy prebuilt backend + frontend from earlier stages
-COPY --from=backend /app /epagneul-backend
-COPY --from=frontend /app /epagneul-frontend
+# Copy prebuilt image tarballs
+RUN mkdir -p /opt/epagneul-images
+COPY --from=backend /out/backend.tar /opt/epagneul-images/backend.tar
+COPY --from=frontend /out/frontend.tar /opt/epagneul-images/frontend.tar
 
-# Provide docker-compose file (build directly from local backend/frontend sources)
+# Provide docker-compose file (use images, not build)
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml << 'EOF'
 version: "3.8"
 
 services:
   backend:
-    build: /epagneul-backend
+    image: epagneul-backend:latest
     container_name: epagneul-backend
     ports:
       - "8000:8000"
@@ -77,7 +76,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: /epagneul-frontend
+    image: epagneul-frontend:latest
     container_name: epagneul-frontend
     ports:
       - "8080:8080"
@@ -109,15 +108,13 @@ networks:
     driver: bridge
 EOF
 
-
 # Copy startup script
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
-# Permissions
+# Fix permissions
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME && \
     $STARTUPDIR/set_user_permission.sh $HOME
 
 USER 1000
 WORKDIR $HOME
-
