@@ -6,44 +6,35 @@ WORKDIR /src
 RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 
 # =========================
-# Stage 2 - Backend image build + export
+# Stage 2 - Backend filesystem export
 # =========================
-FROM docker:25.0.5-cli AS backend-builder
+FROM python:3.8-slim AS backend
 WORKDIR /app
 
-# Copy backend source
+# Build deps (for lxml, evtx, scipy)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ make libffi-dev libssl-dev python3-dev \
+    libxml2-dev libxslt1-dev zlib1g-dev rustc cargo && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=source /src/epagneul/backend /app
+RUN pip install --no-cache-dir .
 
-# Build backend image (Python 3.8 slim with FastAPI app)
-RUN echo 'FROM python:3.8-slim\n\
-RUN apt-get update && apt-get install -y --no-install-recommends \\\n\
-    gcc g++ make libffi-dev libssl-dev python3-dev \\\n\
-    libxml2-dev libxslt1-dev zlib1g-dev rustc cargo && \\\n\
-    rm -rf /var/lib/apt/lists/*\n\
-WORKDIR /app\n\
-COPY . /app\n\
-RUN pip install --no-cache-dir .\n\
-CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]' > Dockerfile && \
-    docker build -t epagneul-backend:latest . && \
-    mkdir -p /out && \
-    docker save epagneul-backend:latest -o /out/epagneul-backend.tar
+# Export filesystem snapshot (to import as image later)
+RUN mkdir -p /out && tar -cf /out/epagneul-backend.tar -C / .
 
 # =========================
-# Stage 3 - Frontend image build + export
+# Stage 3 - Frontend filesystem export
 # =========================
-FROM docker:25.0.5-cli AS frontend-builder
+FROM node:18 AS frontend
 WORKDIR /app
 COPY --from=source /src/epagneul/frontend /app
 
-# Build frontend image (Node 18)
-RUN echo 'FROM node:18\n\
-WORKDIR /app\n\
-COPY . /app\n\
-RUN npm install\n\
-CMD ["npm", "run", "serve", "--", "--host", "0.0.0.0"]' > Dockerfile && \
-    docker build -t epagneul-frontend:latest . && \
-    mkdir -p /out && \
-    docker save epagneul-frontend:latest -o /out/epagneul-frontend.tar
+# Install deps
+RUN npm install
+
+# Export filesystem snapshot
+RUN mkdir -p /out && tar -cf /out/epagneul-frontend.tar -C / .
 
 # =========================
 # Stage 4 - Final Kasm image
@@ -56,17 +47,16 @@ ENV HOME=/home/kasm-user \
     INST_SCRIPTS=$STARTUPDIR/install
 WORKDIR $HOME
 
-# Runtime deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl jq libnotify-bin python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy prebuilt Docker image tars
+# Copy filesystem tars
 RUN mkdir -p /opt/epagneul-images
-COPY --from=backend-builder /out/epagneul-backend.tar /opt/epagneul-images/epagneul-backend.tar
-COPY --from=frontend-builder /out/epagneul-frontend.tar /opt/epagneul-images/epagneul-frontend.tar
+COPY --from=backend /out/epagneul-backend.tar /opt/epagneul-images/epagneul-backend.tar
+COPY --from=frontend /out/epagneul-frontend.tar /opt/epagneul-images/epagneul-frontend.tar
 
-# Provide docker-compose file
+# Compose file (services use images imported from tar)
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml << 'EOF'
 services:
@@ -75,8 +65,6 @@ services:
     container_name: epagneul-backend
     ports:
       - "8000:8000"
-    depends_on:
-      - neo4j
     networks:
       - epagneul-net
     restart: unless-stopped
@@ -91,6 +79,7 @@ services:
     networks:
       - epagneul-net
     restart: unless-stopped
+    command: ["npm", "run", "serve", "--", "--host", "0.0.0.0"]
 
   neo4j:
     image: neo4j:4.4.2
@@ -114,11 +103,10 @@ networks:
     driver: bridge
 EOF
 
-# Copy optimized startup script
+# Copy startup script
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
-# Fix permissions
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME && \
     $STARTUPDIR/set_user_permission.sh $HOME
 
