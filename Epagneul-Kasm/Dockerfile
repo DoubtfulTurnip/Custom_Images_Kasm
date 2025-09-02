@@ -11,26 +11,18 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 FROM python:3.11-slim AS backend
 WORKDIR /app
 
-# Copy project manifest for deps
-COPY --from=source /src/epagneul/pyproject.toml /src/epagneul/poetry.lock* /app/
-
-# Install build deps
+# Install build deps for Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ make libffi-dev libssl-dev python3-dev curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Install poetry
-RUN pip install --no-cache-dir poetry
+# Copy backend source
+COPY --from=source /src/epagneul/backend /app
 
-# Install deps (no venv)
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi
+# Install backend via setup.py
+RUN pip install --no-cache-dir .
 
-# Copy backend source code
-COPY --from=source /src/epagneul/backend /app/backend
-
-# Note: FastAPI app lives under backend/
-CMD ["uvicorn", "backend.epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # =========================
 # Stage 3 - Frontend build
@@ -61,6 +53,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy built contexts
 COPY --from=backend /app /epagneul-backend
 COPY --from=frontend /app /epagneul-frontend
+# Copy upload utility
+COPY --from=source /src/epagneul/upload.py /epagneul/upload.py
 
 # Preload docker images inside DinD
 RUN docker build -t epagneul-backend /epagneul-backend && \
@@ -98,7 +92,7 @@ services:
       - neo4j
     networks:
       - backend
-    command: ["uvicorn", "backend.epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
   frontend:
     image: epagneul-frontend
