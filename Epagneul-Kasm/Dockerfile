@@ -30,7 +30,7 @@ CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 FROM node:18 AS frontend
 WORKDIR /app
 COPY --from=source /src/epagneul/frontend /app
-RUN npm install && npm run build
+RUN npm install
 CMD ["npm", "run", "serve"]
 
 # =========================
