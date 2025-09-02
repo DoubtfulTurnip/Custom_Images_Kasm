@@ -59,14 +59,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=backend /app /epagneul-backend
 COPY --from=frontend /app /epagneul-frontend
 
-# Provide docker-compose file (no "build:", only images/volumes/networks)
+# Provide docker-compose file (build directly from local backend/frontend sources)
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml << 'EOF'
 version: "3.8"
 
 services:
   backend:
-    image: epagneul-backend:latest
+    build: /epagneul-backend
     container_name: epagneul-backend
     ports:
       - "8000:8000"
@@ -77,7 +77,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: epagneul-frontend:latest
+    build: /epagneul-frontend
     container_name: epagneul-frontend
     ports:
       - "8080:8080"
@@ -107,8 +107,8 @@ volumes:
 networks:
   epagneul-net:
     driver: bridge
-
 EOF
+
 
 # Copy startup script
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
