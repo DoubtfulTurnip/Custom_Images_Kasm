@@ -8,13 +8,8 @@ STATUS_FILE="$HOME/Desktop/Epagneul_Status.txt"
 PREBUILT_DIR="/opt/epagneul-images"
 COMPOSE_FILE="/epagneul/docker-compose-prod.yml"
 
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $*" | tee -a "$LOGFILE"
-}
-
-error() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $*" | tee -a "$LOGFILE"
-}
+log() { echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $*" | tee -a "$LOGFILE"; }
+error() { echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $*" | tee -a "$LOGFILE"; }
 
 update_status() {
     cat > "$STATUS_FILE" <<EOF
@@ -41,23 +36,19 @@ start_docker() {
 load_images() {
     log "Loading prebuilt images"
     for tar in "$PREBUILT_DIR"/*.tar; do
-        if [ ! -f "$tar" ]; then
-            error "Missing tarball: $tar"
-            exit 1
-        fi
+        [ -f "$tar" ] || continue
         name=$(basename "$tar")
         log "Loading $name"
-        docker load -i "$tar" || {
+        if ! docker load -i "$tar"; then
             error "Failed to load $name"
-            exit 1
-        }
+        fi
     done
 }
 
 start_stack() {
     log "Starting Epagneul stack"
     update_status "Starting Epagneul services..."
-    docker compose -p epagneul -f "$COMPOSE_FILE" up -d
+    docker compose -f "$COMPOSE_FILE" up -d
 }
 
 wait_for_services() {
@@ -75,13 +66,7 @@ wait_for_services() {
 
 launch_browser() {
     log "Launching browser"
-    if command -v google-chrome >/dev/null; then
-        google-chrome --no-sandbox --disable-dev-shm-usage "http://localhost:8080" >/dev/null 2>&1 &
-    elif command -v chromium-browser >/dev/null; then
-        chromium-browser --no-sandbox --disable-dev-shm-usage "http://localhost:8080" >/dev/null 2>&1 &
-    else
-        error "No Chrome/Chromium installed in this Kasm image"
-    fi
+    google-chrome --no-sandbox --disable-dev-shm-usage "http://localhost:8080" >/dev/null 2>&1 &
 }
 
 main() {
