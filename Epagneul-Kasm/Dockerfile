@@ -62,49 +62,52 @@ COPY --from=frontend /app /epagneul-frontend
 # Provide docker-compose file (no "build:", only images/volumes/networks)
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml << 'EOF'
-version: '3.8'
+version: "3.8"
+
 services:
+  backend:
+    image: epagneul-backend:latest
+    container_name: epagneul-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - neo4j
+    networks:
+      - epagneul-net
+    restart: unless-stopped
+
+  frontend:
+    image: epagneul-frontend:latest
+    container_name: epagneul-frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    networks:
+      - epagneul-net
+    restart: unless-stopped
+
   neo4j:
     image: neo4j:4.4.2
-    container_name: neo4j
-    restart: unless-stopped
+    container_name: epagneul-neo4j
     ports:
-      - 7474:7474
-      - 7687:7687
+      - "7474:7474"
+      - "7687:7687"
     environment:
       - NEO4J_AUTH=neo4j/password
     volumes:
       - neo4j_data:/data
     networks:
-      - backend
-
-  backend:
-    build: /epagneul-backend
-    container_name: backend
+      - epagneul-net
     restart: unless-stopped
-    ports:
-      - 8000:8000
-    depends_on:
-      - neo4j
-    networks:
-      - backend
-
-  frontend:
-    build: /epagneul-frontend
-    container_name: frontend
-    restart: unless-stopped
-    ports:
-      - 8080:8080
-    depends_on:
-      - backend
-    networks:
-      - backend
 
 volumes:
   neo4j_data:
 
 networks:
-  backend:
+  epagneul-net:
+    driver: bridge
+
 EOF
 
 # Copy startup script
