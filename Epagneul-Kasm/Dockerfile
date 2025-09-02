@@ -20,8 +20,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy backend source
 COPY --from=source /src/epagneul/backend /app
 
+# Patch invalid evtx dependency before install
+RUN sed -i 's/evtx==0.7.2/evtx==0.7.3/' setup.py
+
 # Install backend via setup.py
 RUN pip install --no-cache-dir .
+
 
 CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
