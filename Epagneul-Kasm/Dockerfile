@@ -18,17 +18,20 @@ RUN apk add --no-cache python3 py3-pip gcc g++ make libffi-dev openssl-dev \
 # Copy backend source
 COPY --from=source /src/epagneul/backend /app
 
-# Install backend into venv
-RUN python3 -m venv venv && ./venv/bin/pip install --upgrade pip && ./venv/bin/pip install .
+# Patch setup.py and install backend
+RUN sed -i 's/>=3\.8\.\*/>=3.8/' setup.py && \
+    pip install --upgrade pip && \
+    pip install --no-cache-dir .
 
 # Build a minimal runtime Docker image for backend
 RUN echo 'FROM python:3.8-slim\n\
 WORKDIR /app\n\
 COPY . /app\n\
-RUN pip install --no-cache-dir .\n\
+RUN sed -i "s/>=3\\.8\\.\\*/>=3.8/" setup.py && pip install --no-cache-dir .\n\
 CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]' > Dockerfile && \
     docker build -t epagneul-backend:latest . && \
     mkdir -p /out && docker save epagneul-backend:latest -o /out/epagneul-backend.tar
+
 
 # =========================
 # Stage 3 - Frontend build
