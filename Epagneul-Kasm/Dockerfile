@@ -6,7 +6,7 @@ ENV HOME=/home/kasm-user \
     INST_SCRIPTS=$STARTUPDIR/install
 WORKDIR $HOME
 
-# Install all required dependencies including python3-full
+# Install all required dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Runtime dependencies
     curl \
@@ -36,44 +36,37 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     npm && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
-# Clone and build Epagneul applications
+# Clone and prepare Epagneul source
 WORKDIR /tmp/build
 RUN git clone --depth=1 https://github.com/jurelou/epagneul.git epagneul-source
 
-# Build backend application with comprehensive Python version fixes
+# Build backend application with comprehensive fixes
 WORKDIR /tmp/build/epagneul-source/backend
 RUN echo "Building Epagneul backend..." && \
     echo "Current Python version: $(python3 --version)" && \
     # Create virtual environment
     python3 -m venv /opt/epagneul-venv && \
-    # Activate virtual environment and upgrade pip
-    /opt/epagneul-venv/bin/python -m pip install --upgrade pip && \
-    # Show original version constraints
+    # Use pip < 24.1 to avoid uvicorn metadata issues
+    /opt/epagneul-venv/bin/python -m pip install --upgrade "pip<24.1" && \
+    echo "Using pip version: $(/opt/epagneul-venv/bin/pip --version)" && \
+    # Show original constraints
     echo "=== Original Python requirements ===" && \
     grep -r "python" setup.py pyproject.toml setup.cfg 2>/dev/null || echo "No explicit python requirements found" && \
-    # Comprehensive fix for Python version requirements
+    # Fix Python version constraints
     echo "=== Fixing Python version constraints ===" && \
-    # Fix setup.py
     if [ -f setup.py ]; then \
+        sed -i 's/python_requires=">=3\.8\.\*, <3\.9"/python_requires=">=3.8"/' setup.py && \
         sed -i 's/python_requires.*=.*"[^"]*"/python_requires=">=3.8"/' setup.py && \
-        sed -i "s/python_requires.*=.*'[^']*'/python_requires='>=3.8'/" setup.py && \
-        sed -i 's/>=3\.8\.\*/>=3.8/' setup.py && \
-        sed -i 's/<3\.9,>=3\.8/>=3.8/' setup.py; \
+        sed -i "s/python_requires.*=.*'[^']*'/python_requires='>=3.8'/" setup.py; \
     fi && \
-    # Fix pyproject.toml if it exists
     if [ -f pyproject.toml ]; then \
         sed -i 's/python.*=.*"<3\.9,>=3\.8"/python = ">=3.8"/' pyproject.toml && \
-        sed -i 's/python.*=.*">=3\.8\.\*"/python = ">=3.8"/' pyproject.toml && \
         sed -i 's/requires-python.*=.*"<3\.9,>=3\.8"/requires-python = ">=3.8"/' pyproject.toml; \
     fi && \
-    # Fix setup.cfg if it exists
-    if [ -f setup.cfg ]; then \
-        sed -i 's/python_requires.*=.*/python_requires = >=3.8/' setup.cfg; \
-    fi && \
-    # Show fixed version constraints
+    # Show fixed constraints
     echo "=== Fixed Python requirements ===" && \
     grep -r "python" setup.py pyproject.toml setup.cfg 2>/dev/null || echo "No python requirements found after fix" && \
-    # Install the backend application
+    # Install backend with compatible dependency versions
     echo "=== Installing backend application ===" && \
     /opt/epagneul-venv/bin/pip install --no-cache-dir . && \
     echo "Backend build completed successfully"
@@ -81,22 +74,18 @@ RUN echo "Building Epagneul backend..." && \
 # Build frontend application  
 WORKDIR /tmp/build/epagneul-source/frontend
 RUN echo "Building Epagneul frontend..." && \
-    # Install dependencies
     npm ci || npm install && \
     echo "Frontend build completed"
 
 # Create optimized runtime structure
 RUN echo "Setting up runtime environment..." && \
     mkdir -p /opt/epagneul && \
-    # Copy built applications to runtime location
     cp -r /tmp/build/epagneul-source/* /opt/epagneul/ && \
-    # Make virtual environment accessible
     ln -s /opt/epagneul-venv /opt/epagneul/venv && \
-    # Clean up build artifacts
     rm -rf /tmp/build && \
     echo "Runtime setup completed"
 
-# Create optimized docker-compose file
+# Create simple docker-compose file optimized for quick startup
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml <<'EOF'
 services:
@@ -112,9 +101,8 @@ services:
     command: >
       bash -c "
         apt-get update && apt-get install -y --no-install-recommends curl &&
-        echo 'Using pre-built virtual environment' &&
+        echo 'Backend starting with pre-built virtual environment' &&
         /opt/epagneul-venv/bin/python --version &&
-        /opt/epagneul-venv/bin/python -c 'import epagneul.api.app; print(\"Backend module imported successfully\")' &&
         /opt/epagneul-venv/bin/uvicorn epagneul.api.app:app --host 0.0.0.0 --port 8000
       "
     depends_on:
@@ -127,7 +115,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 45s
 
   frontend:
     image: node:18-slim
@@ -140,8 +128,8 @@ services:
     command: >
       bash -c "
         apt-get update && apt-get install -y --no-install-recommends curl &&
-        echo 'Using pre-installed node modules' &&
-        ls -la node_modules/ | head -5 &&
+        echo 'Frontend starting with pre-installed dependencies' &&
+        ls node_modules/ | head -3 &&
         npm run serve -- --host 0.0.0.0 --port 8080
       "
     depends_on:
@@ -154,7 +142,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 45s
 
   neo4j:
     image: neo4j:4.4.2
@@ -166,9 +154,9 @@ services:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_apoc_export_file_enabled=true
       - NEO4J_apoc_import_file_enabled=true
-      - NEO4J_dbms_memory_heap_initial__size=512m
-      - NEO4J_dbms_memory_heap_max__size=1G
-      - NEO4J_dbms_memory_pagecache_size=256m
+      - NEO4J_dbms_memory_heap_initial__size=256m
+      - NEO4J_dbms_memory_heap_max__size=512m
+      - NEO4J_dbms_memory_pagecache_size=128m
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
@@ -197,7 +185,7 @@ networks:
     driver: bridge
 EOF
 
-# Copy optimized startup script
+# Copy startup script
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
@@ -209,13 +197,13 @@ backend=$(curl -sf http://localhost:8000 >/dev/null 2>&1 && echo "OK" || echo "D
 neo4j=$(curl -sf http://localhost:7474 >/dev/null 2>&1 && echo "OK" || echo "DOWN")
 
 if [[ "$web_ui" == "OK" && "$backend" == "OK" ]]; then
-    echo "Epagneul is healthy (WebUI: $web_ui, Backend: $backend, Neo4j: $neo4j)"
+    echo "Epagneul is healthy"
     exit 0
 elif [[ "$backend" == "OK" || "$neo4j" == "OK" ]]; then
-    echo "Epagneul is starting (WebUI: $web_ui, Backend: $backend, Neo4j: $neo4j)"
+    echo "Epagneul is starting"
     exit 0
 else
-    echo "Epagneul not ready (WebUI: $web_ui, Backend: $backend, Neo4j: $neo4j)"
+    echo "Epagneul not ready"
     exit 1
 fi
 EOF
@@ -223,10 +211,10 @@ EOF
 RUN chmod +x /usr/local/bin/epagneul-health-check
 
 # Add container health check
-HEALTHCHECK --interval=30s --timeout=15s --start-period=180s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=3 \
     CMD /usr/local/bin/epagneul-health-check
 
-# Fix permissions for all created directories and files
+# Fix permissions
 RUN chown -R 1000:0 /epagneul /opt/epagneul /opt/epagneul-venv && \
     mkdir -p $HOME && chown -R 1000:0 $HOME && \
     $STARTUPDIR/set_user_permission.sh $HOME
