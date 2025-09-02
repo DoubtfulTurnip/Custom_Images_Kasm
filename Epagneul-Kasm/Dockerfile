@@ -70,7 +70,7 @@ networks:
 EOF
 
 # Copy startup script
-COPY custom_startup_epagnuel.sh $STARTUPDIR/custom_startup.sh
+COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
 # Create health check script using standard approach
