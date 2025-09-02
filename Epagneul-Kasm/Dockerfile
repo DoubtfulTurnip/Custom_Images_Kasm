@@ -11,22 +11,22 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 FROM python:3.8-slim AS backend
 WORKDIR /app
 
-# Build deps (for lxml, evtx, scipy, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ make libffi-dev libssl-dev python3-dev \
     libxml2-dev libxslt1-dev zlib1g-dev rustc cargo && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy backend source
 COPY --from=source /src/epagneul/backend /app
 
-# Patch python_requires and install with pinned pip (<24.1 required for uvicorn==0.14.0)
 RUN sed -i 's/>=3\.8\.\*/>=3.8/' setup.py && \
     pip install --upgrade "pip<24.1" && \
     pip install --no-cache-dir .
 
-# Save backend image as tarball
-RUN mkdir -p /out && tar -cf /out/epagneul-backend.tar -C /app .
+# Build backend runtime image
+RUN echo 'FROM python:3.8-slim\nWORKDIR /app\nCOPY . /app\nCMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]' > Dockerfile && \
+    docker build -t epagneul-backend:latest . && \
+    mkdir -p /out && docker save epagneul-backend:latest -o /out/epagneul-backend.tar
+
 
 # =========================
 # Stage 3 - Frontend build
@@ -35,11 +35,12 @@ FROM node:18 AS frontend
 WORKDIR /app
 COPY --from=source /src/epagneul/frontend /app
 
-# Install dependencies (lockfile-aware)
 RUN npm ci || npm install
 
-# Save frontend as tarball
-RUN mkdir -p /out && tar -cf /out/epagneul-frontend.tar -C /app .
+# Build frontend runtime image
+RUN echo 'FROM node:18\nWORKDIR /app\nCOPY . /app\nCMD ["npm", "run", "serve", "--", "--host", "0.0.0.0"]' > Dockerfile && \
+    docker build -t epagneul-frontend:latest . && \
+    mkdir -p /out && docker save epagneul-frontend:latest -o /out/epagneul-frontend.tar
 
 # =========================
 # Stage 4 - Final Kasm image
