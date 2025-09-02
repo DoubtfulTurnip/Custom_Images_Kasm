@@ -6,15 +6,9 @@ WORKDIR /src
 RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 
 # =========================
-# Stage 2 - Backend image build
+# Stage 2 - Backend build
 # =========================
-FROM docker:24-dind AS backend-builder
-WORKDIR /build/backend
-COPY --from=source /src/epagneul/backend /build/backend
-
-# Create Dockerfile for backend image
-RUN cat > Dockerfile <<'EOF'
-FROM python:3.8-slim
+FROM python:3.8-slim AS backend
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -22,37 +16,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2-dev libxslt1-dev zlib1g-dev rustc cargo && \
     rm -rf /var/lib/apt/lists/*
 
-COPY . /app
-RUN sed -i "s/>=3\.8\.\*/>=3.8/" setup.py && \
+COPY --from=source /src/epagneul/backend /app
+
+RUN sed -i 's/>=3\.8\.\*/>=3.8/' setup.py && \
     pip install --upgrade "pip<24.1" && \
     pip install --no-cache-dir .
 
-CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
-EOF
-
-RUN docker build -t epagneul-backend:latest .
-RUN mkdir -p /out && docker save epagneul-backend:latest -o /out/epagneul-backend.tar
+# Save backend environment into tarball
+RUN mkdir -p /out && tar -cf /out/epagneul-backend.tar -C /app .
 
 # =========================
-# Stage 3 - Frontend image build
+# Stage 3 - Frontend build
 # =========================
-FROM docker:24-dind AS frontend-builder
-WORKDIR /build/frontend
-COPY --from=source /src/epagneul/frontend /build/frontend
-
-# Create Dockerfile for frontend image
-RUN cat > Dockerfile <<'EOF'
-FROM node:18
+FROM node:18 AS frontend
 WORKDIR /app
+COPY --from=source /src/epagneul/frontend /app
 
-COPY . /app
 RUN npm ci || npm install
 
-CMD ["npm", "run", "serve", "--", "--host", "0.0.0.0"]
-EOF
-
-RUN docker build -t epagneul-frontend:latest .
-RUN mkdir -p /out && docker save epagneul-frontend:latest -o /out/epagneul-frontend.tar
+# Save frontend app into tarball
+RUN mkdir -p /out && tar -cf /out/epagneul-frontend.tar -C /app .
 
 # =========================
 # Stage 4 - Final Kasm image
@@ -65,36 +48,34 @@ ENV HOME=/home/kasm-user \
     INST_SCRIPTS=$STARTUPDIR/install
 WORKDIR $HOME
 
-# Runtime deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl jq libnotify-bin python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy prebuilt tarballs
+# Copy tarballs
 RUN mkdir -p /opt/epagneul-images
-COPY --from=backend-builder /out/epagneul-backend.tar /opt/epagneul-images/epagneul-backend.tar
-COPY --from=frontend-builder /out/epagneul-frontend.tar /opt/epagneul-images/epagneul-frontend.tar
+COPY --from=backend /out/epagneul-backend.tar /opt/epagneul-images/epagneul-backend.tar
+COPY --from=frontend /out/epagneul-frontend.tar /opt/epagneul-images/epagneul-frontend.tar
 
-# Provide docker-compose file
+# Provide docker-compose
 RUN mkdir -p /epagneul && \
     cat > /epagneul/docker-compose-prod.yml <<'EOF'
 services:
   backend:
     image: epagneul-backend:latest
+    build: /app
     ports:
       - "8000:8000"
-    depends_on:
-      - neo4j
+    depends_on: [neo4j]
     networks: [epagneul-net]
 
   frontend:
     image: epagneul-frontend:latest
+    build: /app
     ports:
       - "8080:8080"
-    depends_on:
-      - backend
+    depends_on: [backend]
     networks: [epagneul-net]
-    command: ["npm", "run", "serve", "--", "--host", "0.0.0.0"]
 
   neo4j:
     image: neo4j:4.4.2
@@ -114,11 +95,9 @@ networks:
     driver: bridge
 EOF
 
-# Copy optimized startup script
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
-# Fix permissions
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME && \
     $STARTUPDIR/set_user_permission.sh $HOME
 
