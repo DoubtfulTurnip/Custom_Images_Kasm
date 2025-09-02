@@ -26,16 +26,16 @@ RUN mkdir -p /out && \
     tar -cf /out/epagneul-backend.tar -C /app .
 
 # =========================
-# Stage 3 - Frontend build
+# Stage 3 - Frontend prep
 # =========================
 FROM node:18 AS frontend
 WORKDIR /app
 COPY --from=source /src/epagneul/frontend /app
 
-# Install + build Vue frontend
-RUN npm ci && npm run build
+# Install dependencies (use ci if lockfile exists, fallback to install)
+RUN npm ci || npm install
 
-# Package frontend into a tarball for fast load
+# Package the raw frontend app (with deps) into tarball
 RUN mkdir -p /out && \
     tar -cf /out/epagneul-frontend.tar -C /app .
 
@@ -55,7 +55,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl jq libnotify-bin python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy prebuilt backend + frontend image tarballs
+# Copy prebuilt backend + frontend tarballs
 RUN mkdir -p /opt/epagneul-images
 COPY --from=backend /out/epagneul-backend.tar /opt/epagneul-images/epagneul-backend.tar
 COPY --from=frontend /out/epagneul-frontend.tar /opt/epagneul-images/epagneul-frontend.tar
@@ -87,6 +87,7 @@ services:
     networks:
       - epagneul-net
     restart: unless-stopped
+    command: ["npm", "run", "serve", "--", "--host", "0.0.0.0"]
 
   neo4j:
     image: neo4j:4.4.2
