@@ -41,19 +41,23 @@ start_docker() {
 load_images() {
     log "Loading prebuilt images"
     for tar in "$PREBUILT_DIR"/*.tar; do
-        [ -f "$tar" ] || continue
+        if [ ! -f "$tar" ]; then
+            error "Missing tarball: $tar"
+            exit 1
+        fi
         name=$(basename "$tar")
         log "Loading $name"
-        if ! docker load -i "$tar"; then
+        docker load -i "$tar" || {
             error "Failed to load $name"
-        fi
+            exit 1
+        }
     done
 }
 
 start_stack() {
     log "Starting Epagneul stack"
     update_status "Starting Epagneul services..."
-    docker compose -f "$COMPOSE_FILE" up -d
+    docker compose -p epagneul -f "$COMPOSE_FILE" up -d
 }
 
 wait_for_services() {
@@ -71,7 +75,13 @@ wait_for_services() {
 
 launch_browser() {
     log "Launching browser"
-    google-chrome --no-sandbox --disable-dev-shm-usage "http://localhost:8080" >/dev/null 2>&1 &
+    if command -v google-chrome >/dev/null; then
+        google-chrome --no-sandbox --disable-dev-shm-usage "http://localhost:8080" >/dev/null 2>&1 &
+    elif command -v chromium-browser >/dev/null; then
+        chromium-browser --no-sandbox --disable-dev-shm-usage "http://localhost:8080" >/dev/null 2>&1 &
+    else
+        error "No Chrome/Chromium installed in this Kasm image"
+    fi
 }
 
 main() {
