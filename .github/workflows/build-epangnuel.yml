@@ -1,11 +1,11 @@
-name: Build Epagnuel Kasm Workspace
+name: Build Epagneul Kasm Workspace
 
 on:
   push:
     branches: [ main, master ]
     paths:
-      - 'Epagnuel-Kasm/**'
-      - '.github/workflows/build-epagnuel.yml'
+      - 'Epagneul-Kasm/**'
+      - '.github/workflows/build-epagneul.yml'
   
   workflow_dispatch:
     inputs:
@@ -18,7 +18,7 @@ on:
 env:
   REGISTRY: docker.io
   DOCKER_HUB_USERNAME: bukshee
-  IMAGE_NAME: epagnuel-kasm
+  IMAGE_NAME: epagneul-kasm
 
 jobs:
   build-workspace:
@@ -45,18 +45,18 @@ jobs:
           tags: |
             type=raw,value=1.17.0
           labels: |
-            org.opencontainers.image.title=Epagnuel Kasm Workspace
+            org.opencontainers.image.title=Epagneul Kasm Workspace
             org.opencontainers.image.description=Windows Event Log Visualization workspace for Kasm
             org.opencontainers.image.vendor=DoubtfulTurnip
 
       - name: Validate workspace files
         run: |
           echo "Checking workspace structure..."
-          if [[ ! -d "Epagnuel-Kasm" ]]; then
-            echo "❌ Epagnuel-Kasm directory not found"
+          if [[ ! -d "Epagneul-Kasm" ]]; then
+            echo "❌ Epagneul-Kasm directory not found"
             exit 1
           fi
-          if [[ ! -f "Epagnuel-Kasm/Dockerfile" ]]; then
+          if [[ ! -f "Epagneul-Kasm/Dockerfile" ]]; then
             echo "❌ Dockerfile not found"
             exit 1
           fi
@@ -65,7 +65,7 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
-          context: Epagnuel-Kasm
+          context: Epagneul-Kasm
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -75,7 +75,7 @@ jobs:
 
       - name: Generate build summary
         run: |
-          echo "# 🔍 Epagnuel Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "# 🔍 Epagneul Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
