@@ -1,70 +1,104 @@
-FROM kasmweb/ubuntu-noble-dind:1.17.0
+FROM kasmweb/ubuntu-noble-dind:1.17.0 AS base
+USER root
+ENV STARTUPDIR=/dockerstartup \
+    INST_SCRIPTS=$STARTUPDIR/install
 
+# Install build deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl jq libnotify-bin python3 python3-pip git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Clone repo once
+WORKDIR /src
+RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
+
+# ------------------------
+# Backend image
+# ------------------------
+FROM python:3.11-slim AS backend
+WORKDIR /app
+COPY --from=base /src/backend /app
+RUN pip install --no-cache-dir -r requirements.txt
+CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# ------------------------
+# Frontend image
+# ------------------------
+FROM node:18 AS frontend
+WORKDIR /app
+COPY --from=base /src/frontend /app
+RUN npm install && npm run build
+CMD ["npm", "run", "serve"]
+
+# ------------------------
+# Final Kasm image
+# ------------------------
+FROM kasmweb/ubuntu-noble-dind:1.17.0
 USER root
 
-# Set Kasm environment variables
-ENV HOME=/home/kasm-default-profile \
-    STARTUPDIR=/dockerstartup \
-    INST_SCRIPTS=$STARTUPDIR/install
+ENV HOME=/home/kasm-user \
+    STARTUPDIR=/dockerstartup
 WORKDIR $HOME
 
-# Install required packages
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        curl \
-        git \
-        jq \
-        libnotify-bin \
-        netcat-openbsd \
-        python3 \
-        python3-pip && \
-    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnotify-bin && \
+    rm -rf /var/lib/apt/lists/*
 
-# Create Epagneul directory and clone source
+# Copy in build contexts
+COPY --from=backend /app /epagneul-backend
+COPY --from=frontend /app /epagneul-frontend
+
+# Build & preload docker images inside DinD
+RUN docker build -t epagneul-backend /epagneul-backend && \
+    docker build -t epagneul-frontend /epagneul-frontend && \
+    docker pull neo4j:4.4.2
+
+# Compose file referencing prebuilt images
 RUN mkdir -p /epagneul && \
-    git clone https://github.com/jurelou/epagneul.git /epagneul-source && \
-    chown -R 1000:0 /epagneul /epagneul-source
-
-# Create a simple compose file for runtime
-RUN cat > /epagneul/docker-compose-prod.yml << 'EOF'
+    cat > /epagneul/docker-compose-prod.yml << 'EOF'
 version: '3.8'
 services:
-  backend:
-    build:
-      context: /epagneul-source
-      dockerfile: backend/Dockerfile
-    ports:
-      - "8000:8000"
-    depends_on:
-      - neo4j
-    networks:
-      - backend
-    restart: unless-stopped
-  frontend:
-    build:
-      context: /epagneul-source  
-      dockerfile: frontend/Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      - backend
-    networks:
-      - backend
-    restart: unless-stopped
   neo4j:
-    image: neo4j:4.4-community
+    image: neo4j:4.4.2
+    container_name: neo4j
+    restart: unless-stopped
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - 7474:7474
+      - 7687:7687
     environment:
       - NEO4J_AUTH=neo4j/password
+      - NEO4J_dbms_security_procedures_unrestricted=algo.*,gds.*,apoc.*
+      - NEO4J_apoc_import_file_enabled=true
     volumes:
       - neo4j_data:/data
     networks:
       - backend
+
+  backend:
+    image: epagneul-backend
+    container_name: backend
     restart: unless-stopped
+    ports:
+      - 8000:8000
+    depends_on:
+      - neo4j
+    networks:
+      - backend
+
+  frontend:
+    image: epagneul-frontend
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    depends_on:
+      - backend
+    networks:
+      - backend
+
 volumes:
   neo4j_data:
+
 networks:
   backend:
 EOF
@@ -73,23 +107,9 @@ EOF
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
-# Create health check script using standard approach
-RUN echo '#!/bin/bash' > /usr/local/bin/epagneul-health-check && \
-    echo 'curl -sf http://localhost:8080 >/dev/null 2>&1 && echo "Healthy" || echo "Not ready"' >> /usr/local/bin/epagneul-health-check && \
-    chmod +x /usr/local/bin/epagneul-health-check
-
-# Add container health check
-HEALTHCHECK --interval=30s --timeout=15s --start-period=180s --retries=3 \
-    CMD /usr/local/bin/epagneul-health-check
-
 # Fix permissions
-RUN chown -R 1000:0 /epagneul && \
-    chown 1000:0 $HOME && \
+RUN mkdir -p $HOME && chown -R 1000:0 $HOME && \
     $STARTUPDIR/set_user_permission.sh $HOME
 
-# Switch to persistent user profile
-ENV HOME=/home/kasm-user
-WORKDIR $HOME
-RUN mkdir -p $HOME && chown -R 1000:0 $HOME
-
 USER 1000
+WORKDIR $HOME
