@@ -8,7 +8,7 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 # =========================
 # Stage 2 - Backend build
 # =========================
-FROM python:3.9-slim AS backend
+FROM python:3.8-slim AS backend
 WORKDIR /app
 
 # Install build deps for lxml + evtx (Rust) + scipy
@@ -25,6 +25,7 @@ COPY --from=source /src/epagneul/backend /app
 RUN pip install --no-cache-dir .
 
 CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
 
 
 
