@@ -11,9 +11,10 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 FROM python:3.11-slim AS backend
 WORKDIR /app
 
-# Install build deps for Python packages
+# Install build deps for Python packages (lxml, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ make libffi-dev libssl-dev python3-dev curl && \
+    gcc g++ make libffi-dev libssl-dev python3-dev \
+    libxml2-dev libxslt1-dev zlib1g-dev curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy backend source
@@ -23,6 +24,7 @@ COPY --from=source /src/epagneul/backend /app
 RUN pip install --no-cache-dir .
 
 CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
 
 # =========================
 # Stage 3 - Frontend build
