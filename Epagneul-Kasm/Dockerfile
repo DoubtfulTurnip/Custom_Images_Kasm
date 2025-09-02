@@ -11,23 +11,24 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 FROM python:3.11-slim AS backend
 WORKDIR /app
 
-# Install build deps for Python packages (lxml, etc.)
+# Install build deps for Python packages (lxml, evtx needs Rust)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ make libffi-dev libssl-dev python3-dev \
-    libxml2-dev libxslt1-dev zlib1g-dev curl && \
+    libxml2-dev libxslt1-dev zlib1g-dev curl \
+    rustc cargo && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy backend source
 COPY --from=source /src/epagneul/backend /app
 
-# Patch invalid evtx dependency before install
+# Patch invalid evtx version (if still pinned to 0.7.2)
 RUN sed -i 's/evtx==0.7.2/evtx==0.7.3/' setup.py
 
 # Install backend via setup.py
 RUN pip install --no-cache-dir .
 
-
 CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
 
 
 # =========================
