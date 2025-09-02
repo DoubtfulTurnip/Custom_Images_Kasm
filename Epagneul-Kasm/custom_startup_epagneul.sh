@@ -168,13 +168,13 @@ wait_for_services() {
     log "Waiting for services to become healthy"
     update_status "⌛ BUILDING" "Services are building and initializing...
 
-🗄️ Neo4j Database: Starting (usually ready in 30-60s)
-⚙️ Backend API: Installing Python dependencies (1-2 minutes)
-🌐 Web Interface: Installing Node.js dependencies (1-2 minutes)
+🗄️ Neo4j Database: Starting (optimized for 512MB, ready in 30-45s)
+⚙️ Backend API: Using pre-built virtual environment (ready in 15-30s)
+🌐 Web Interface: Using pre-installed dependencies (ready in 20-30s)
 
-This is normal for first startup as dependencies are being installed."
+This startup is much faster since dependencies are pre-installed!"
     
-    local max_wait=240  # 4 minutes total for first build
+    local max_wait=120  # 2 minutes total for optimized startup
     local services_ready=0
     
     for ((i=1; i<=max_wait; i++)); do
