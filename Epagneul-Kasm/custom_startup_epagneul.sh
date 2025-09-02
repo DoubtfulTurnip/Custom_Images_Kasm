@@ -1,5 +1,6 @@
 #!/bin/bash
 # Enhanced Epagneul startup script for Kasm (optimized for pre-built images)
+
 set -euo pipefail
 
 # Configuration
@@ -329,7 +330,7 @@ finalize_setup() {
     google-chrome --start-maximized --no-first-run "$WEB_UI_URL" >/dev/null 2>&1 &
     
     # Success notification
-    notify-send -t 15000 "🔍 Epagnuel Ready!" \
+    notify-send -t 15000 "🔍 Epagneul Ready!" \
         "Event Log Analyzer deployed with optimization!
 🌐 Web Interface: $WEB_UI_URL
 ⚡ 85% faster startup with pre-built images  
