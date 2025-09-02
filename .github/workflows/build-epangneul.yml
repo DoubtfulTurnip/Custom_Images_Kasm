@@ -6,14 +6,7 @@ on:
     paths:
       - 'Epagneul-Kasm/**'
       - '.github/workflows/build-epagneul.yml'
-  
   workflow_dispatch:
-    inputs:
-      force_rebuild:
-        description: 'Force complete rebuild'
-        required: false
-        default: 'false'
-        type: boolean
 
 env:
   REGISTRY: docker.io
@@ -37,48 +30,19 @@ jobs:
           username: ${{ env.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=1.17.0
-          labels: |
-            org.opencontainers.image.title=Epagneul Kasm Workspace
-            org.opencontainers.image.description=Windows Event Log Visualization workspace for Kasm
-            org.opencontainers.image.vendor=DoubtfulTurnip
-
-      - name: Validate workspace files
-        run: |
-          echo "Checking workspace structure..."
-          if [[ ! -d "Epagneul-Kasm" ]]; then
-            echo "❌ Epagneul-Kasm directory not found"
-            exit 1
-          fi
-          if [[ ! -f "Epagneul-Kasm/Dockerfile" ]]; then
-            echo "❌ Dockerfile not found"
-            exit 1
-          fi
-          echo "✅ Workspace files validated"
-
-      - name: Build and push image
+      - name: Build and push workspace image
         uses: docker/build-push-action@v5
         with:
           context: Epagneul-Kasm
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Generate build summary
+      - name: Build summary
         run: |
-          echo "# 🔍 Epagneul Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Kasm Version:** 1.17.x compatible" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Usage:** Update your Kasm workspace registry to use this image" >> $GITHUB_STEP_SUMMARY
+          echo "# ✅ Epagneul Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "**Workspace Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend Image:** \`bukshee/epagneul-backend:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend Image:** \`bukshee/epagneul-frontend:latest\`" >> $GITHUB_STEP_SUMMARY
