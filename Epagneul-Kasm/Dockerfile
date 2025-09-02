@@ -11,6 +11,12 @@ RUN git clone --depth=1 https://github.com/jurelou/epagneul.git
 FROM python:3.11-slim AS backend
 WORKDIR /app
 COPY --from=source /src/epagneul/backend /app
+
+# Install build deps for Python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ make libffi-dev libssl-dev python3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir -r requirements.txt
 CMD ["uvicorn", "epagneul.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
