@@ -1,5 +1,5 @@
 #!/bin/bash
-# Simplified Epagneul startup script for Kasm (no pre-built images)
+# Simplified Epagneul startup script for Kasm (runtime Docker build)
 
 set -euo pipefail
 
@@ -7,7 +7,7 @@ set -euo pipefail
 readonly DESKTOP_DIR="$HOME/Desktop"
 readonly LOGFILE="$DESKTOP_DIR/Epagneul_startup.log"
 readonly STATUS_FILE="$DESKTOP_DIR/Epagneul_Status.txt"
-readonly COMPOSE_FILE="/epagneul/docker-compose-prod.yml"
+readonly EPAGNEUL_DIR="/epagneul"
 readonly WEB_UI_URL="http://localhost:8080"
 readonly BACKEND_URL="http://localhost:8000"
 readonly NEO4J_URL="http://localhost:7474"
@@ -36,9 +36,9 @@ $details
 
 === Container Management ===
 Project Name: ${PROJECT_NAME:-"Not started"}
-View containers: docker compose -f "$COMPOSE_FILE" -p "${PROJECT_NAME:-epagneul}" ps
-View logs: docker compose -f "$COMPOSE_FILE" -p "${PROJECT_NAME:-epagneul}" logs
-Stop services: docker compose -f "$COMPOSE_FILE" -p "${PROJECT_NAME:-epagneul}" down
+View containers: docker compose -p "${PROJECT_NAME:-epagneul}" ps
+View logs: docker compose -p "${PROJECT_NAME:-epagneul}" logs  
+Stop services: docker compose -p "${PROJECT_NAME:-epagneul}" down
 
 Log file: $LOGFILE
 EOF
@@ -59,7 +59,8 @@ Common issues:
 • Docker service failed to start
 • Port conflicts (8080, 8000, 7474 already in use)  
 • Network connectivity issues
-• Insufficient memory for services
+• Build failures due to dependency conflicts
+• Insufficient memory for Docker builds
 
 Check the log file for detailed error information."
     
@@ -105,32 +106,26 @@ start_docker() {
     return 1
 }
 
-# Pull required base images
-pull_base_images() {
-    log "Pre-pulling required base images"
-    update_status "📥 PULLING" "Downloading required base images...
-
-Pulling images:
-• Python 3.8 (Backend runtime)
-• Node.js 18 (Frontend runtime)
-• Neo4j 4.4.2 (Graph database)
-
-This ensures faster service startup."
+# Determine which compose file to use
+find_compose_file() {
+    log "Looking for Epagneul compose file"
     
-    local images=("python:3.8-slim" "node:18-slim" "neo4j:4.4.2")
-    local pulled=0
+    cd "$EPAGNEUL_DIR"
     
-    for image in "${images[@]}"; do
-        log "Pulling $image"
-        if docker pull "$image" >/dev/null 2>&1; then
-            log "Successfully pulled $image"
-            ((pulled++))
-        else
-            warn "Failed to pull $image, will retry during service start"
+    # Try different possible compose file names
+    local compose_files=("docker-compose-prod.yml" "docker-compose.yml" "compose.yml")
+    
+    for file in "${compose_files[@]}"; do
+        if [[ -f "$file" ]]; then
+            COMPOSE_FILE="$file"
+            log "Found compose file: $COMPOSE_FILE"
+            return 0
         fi
     done
     
-    log "Pre-pulled $pulled base images"
+    error "No docker compose file found in $EPAGNEUL_DIR"
+    ls -la "$EPAGNEUL_DIR" | tee -a "$LOGFILE"
+    return 1
 }
 
 # Start the application stack
@@ -139,11 +134,10 @@ start_stack() {
     update_status "⏳ BUILDING" "Building and starting Epagneul services...
 
 Services starting:
-• 🗄️ Neo4j Graph Database (ready first)
-• ⚙️ Backend API Server (builds Python dependencies)
-• 🌐 Frontend Web Interface (builds Node.js app)
+• 🌐 Main Epagneul application (includes web interface)
+• 🗄️ Neo4j Graph Database (if configured)
 
-First startup includes dependency installation and may take 2-3 minutes."
+First startup includes building containers from source and may take 3-5 minutes."
     
     # Generate unique project name
     local timestamp=$(date +%s)
@@ -152,13 +146,15 @@ First startup includes dependency installation and may take 2-3 minutes."
     export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
     
     log "Using project name: $PROJECT_NAME"
+    log "Working directory: $(pwd)"
+    log "Compose file: $COMPOSE_FILE"
     
-    # Start services with compose
-    if timeout 300 docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d; then
+    # Start services with compose (extended timeout for build)
+    if timeout 600 docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d --build; then
         log "Services started successfully"
     else
         error "Failed to start services within timeout"
-        docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs --tail=20 | tee -a "$LOGFILE" 2>&1 || true
+        docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs --tail=50 | tee -a "$LOGFILE" 2>&1 || true
         return 1
     fi
 }
@@ -166,15 +162,15 @@ First startup includes dependency installation and may take 2-3 minutes."
 # Wait for all services to be healthy
 wait_for_services() {
     log "Waiting for services to become healthy"
-    update_status "⌛ BUILDING" "Services are building and initializing...
+    update_status "⌛ STARTING" "Services are starting up after build...
 
-🗄️ Neo4j Database: Starting (optimized for 512MB, ready in 30-45s)
-⚙️ Backend API: Using pre-built virtual environment (ready in 15-30s)
-🌐 Web Interface: Using pre-installed dependencies (ready in 20-30s)
+🗄️ Neo4j Database: Initializing (1-2 minutes)
+⚙️ Backend API: Starting after build (30-60s)
+🌐 Web Interface: Starting after build (30-60s)
 
-This startup is much faster since dependencies are pre-installed!"
+Services have been built and are now starting up."
     
-    local max_wait=120  # 2 minutes total for optimized startup
+    local max_wait=300  # 5 minutes total wait time
     local services_ready=0
     
     for ((i=1; i<=max_wait; i++)); do
@@ -200,12 +196,12 @@ This startup is much faster since dependencies are pre-installed!"
             local status_msg="Service startup in progress... (${i}s elapsed)
 
 🗄️ Neo4j Database: $([ $neo4j_ready -eq 1 ] && echo "✅ Ready" || echo "⏳ Starting")
-⚙️ Backend API: $([ $backend_ready -eq 1 ] && echo "✅ Ready" || echo "🔨 Building")
-🌐 Web Interface: $([ $frontend_ready -eq 1 ] && echo "✅ Ready" || echo "🔨 Building")
+⚙️ Backend API: $([ $backend_ready -eq 1 ] && echo "✅ Ready" || echo "⏳ Starting")
+🌐 Web Interface: $([ $frontend_ready -eq 1 ] && echo "✅ Ready" || echo "⏳ Starting")
 
-Building includes installing all dependencies from source."
+Containers have been built and are initializing."
             
-            update_status "⌛ BUILDING" "$status_msg"
+            update_status "⌛ STARTING" "$status_msg"
         fi
         
         # Check if all services are ready
@@ -228,7 +224,7 @@ Building includes installing all dependencies from source."
             warn "Some services are ready, continuing with launch"
         else
             error "No services are responding, startup may have failed"
-            docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs --tail=30 | tee -a "$LOGFILE"
+            docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs --tail=50 | tee -a "$LOGFILE"
             return 1
         fi
     fi
@@ -292,7 +288,7 @@ create_user_guide() {
     cat > "$DESKTOP_DIR/Epagneul_User_Guide.txt" <<EOF
 === Epagneul Windows Event Log Analyzer ===
 Started: $(date)
-Deployment: Direct build approach
+Deployment: Runtime Docker build approach
 
 🎯 PURPOSE:
 Epagneul is a powerful tool for visualizing and investigating Windows event logs
@@ -304,10 +300,10 @@ using graph-based analysis to reveal relationships between hosts, users, and log
 • Neo4j Browser: $NEO4J_URL (Graph database)
 
 🚀 DEPLOYMENT FEATURES:
-• Direct source build (no Docker-in-Docker complexity)
-• Fresh dependency installation for latest compatibility
-• Reliable container orchestration
-• Expected startup time: 2-3 minutes (first run), 30-60s (subsequent)
+• Runtime Docker container builds from source
+• Uses official Epagneul docker-compose configuration
+• Reliable container orchestration with Docker-in-Docker
+• Expected startup time: 3-5 minutes (first run), 1-2 minutes (subsequent)
 
 📊 KEY FEATURES:
 • Graph visualization of Windows logon events
@@ -343,11 +339,11 @@ Restart: docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" restart
 • EVTX Format: Windows Event Log Analysis
 
 💡 TROUBLESHOOTING:
-• If web UI doesn't load: Check $WEB_UI_URL in browser, may need more time
+• If web UI doesn't load: Check $WEB_UI_URL in browser, may need more build time
 • If upload fails: Verify backend API at $BACKEND_URL
 • If graphs don't appear: Ensure Neo4j at $NEO4J_URL, check data import
+• For build failures: Check logs for Python/Node.js dependency errors
 • For slow performance: Check container resources, restart services if needed
-• Build failures: Check logs for dependency installation errors
 
 🔍 ANALYSIS TIPS:
 • Start with small log files to familiarize yourself with the interface
@@ -375,7 +371,7 @@ finalize_setup() {
 🌐 Access: $WEB_UI_URL  
 📖 User Guide: See Epagneul_User_Guide.txt
 📊 Services: $running_containers/$total_containers containers running
-🔧 Build: Direct source build completed
+🔧 Build: Runtime container build completed
 
 🚀 QUICK START:
 1. Browser opened automatically to web interface
@@ -392,7 +388,7 @@ Ready to investigate Windows event logs!"
     notify-send -t 15000 "🔍 Epagneul Ready!" \
         "Windows Event Log Analyzer is ready!
 🌐 Web Interface: $WEB_UI_URL
-🔧 Direct build deployment completed
+🔧 Runtime build deployment completed
 📖 Check desktop for user guide and status"
     
     log "Epagneul startup completed successfully"
@@ -405,29 +401,29 @@ main() {
     
     # Initialize log file
     cat > "$LOGFILE" <<EOF
-=== Epagneul Direct Build Startup Log ===
+=== Epagneul Runtime Build Startup Log ===
 Started: $(date)
 Workspace: $(hostname)
 User: $(whoami)
-Approach: Direct source build (no Docker-in-Docker)
-=============================================
+Approach: Runtime Docker container build
+==========================================
 
 EOF
     
-    log "Starting Epagneul deployment with direct build approach"
+    log "Starting Epagneul deployment with runtime build approach"
     
     # Initial notification
     notify-send -t 10000 "🔍 Epagneul Starting" \
         "Windows Event Log Analyzer starting...
-🔧 Using direct build approach
-Expected time: 2-3 minutes (first run)
+🔧 Using runtime build approach
+Expected time: 3-5 minutes (first run)
 Progress updates on desktop"
     
     # Initial status
-    update_status "🚀 INITIALIZING" "Starting Epagneul deployment with direct build...
+    update_status "🚀 INITIALIZING" "Starting Epagneul deployment with runtime build...
 
-This version builds services directly from source for maximum reliability.
-First startup includes dependency installation and may take 2-3 minutes.
+This version builds containers from source at startup for maximum compatibility.
+First startup includes building containers and may take 3-5 minutes.
 
 Features:
 • Graph-based Windows event log analysis
@@ -440,7 +436,7 @@ Status will update automatically as services build and start."
     # Execute startup sequence
     cleanup_existing
     start_docker
-    pull_base_images
+    find_compose_file
     start_stack
     wait_for_services
     launch_browser  
