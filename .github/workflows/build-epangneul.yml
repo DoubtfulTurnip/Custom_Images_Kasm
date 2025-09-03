@@ -1,4 +1,4 @@
-name: Build Epagneul Kasm Workspace
+name: Build Epagneul Kasm Workspace (Runtime Build)
  
 on:
   push:
@@ -36,48 +36,25 @@ jobs:
           context: Epagneul-Kasm
           platforms: linux/amd64
           push: true
-          tags: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0
+          tags: |
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Extract and push component images
-        run: |
-          echo "Extracting component images from workspace image..."
-          
-          # Create temporary container to extract tar files
-          docker create --name temp ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0
-          
-          # Extract the pre-built tar files
-          docker cp temp:/opt/epagneul-images/epagneul-backend.tar ./epagneul-backend.tar
-          docker cp temp:/opt/epagneul-images/epagneul-frontend.tar ./epagneul-frontend.tar
-          
-          # Clean up temporary container
-          docker rm temp
-          
-          # Load the images from tar files
-          echo "Loading backend image..."
-          docker load < epagneul-backend.tar
-          
-          echo "Loading frontend image..."
-          docker load < epagneul-frontend.tar
-          
-          # Push the component images to Docker Hub
-          echo "Pushing component images..."
-          docker push bukshee/epagneul-backend:latest
-          docker push bukshee/epagneul-frontend:latest
-          
-          echo "✅ Component images pushed successfully"
-
       - name: Build summary
         run: |
-          echo "# ✅ Epagneul Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "# ✅ Epagneul Runtime Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📦 Images Built and Pushed:" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Image Built and Pushed:" >> $GITHUB_STEP_SUMMARY
           echo "- **Workspace Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend Image:** \`bukshee/epagneul-backend:latest\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend Image:** \`bukshee/epagneul-frontend:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🚀 Usage:" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Features:" >> $GITHUB_STEP_SUMMARY
+          echo "- Runtime Docker build approach" >> $GITHUB_STEP_SUMMARY
+          echo "- Builds Epagneul containers at startup (3-5 minutes first run)" >> $GITHUB_STEP_SUMMARY
+          echo "- Simple and flexible configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Usage:" >> $GITHUB_STEP_SUMMARY
           echo "Update your Kasm workspace to use: \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The workspace contains pre-built application images for fast startup!" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Note:** First startup will take 3-5 minutes to build containers from source." >> $GITHUB_STEP_SUMMARY
